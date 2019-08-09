@@ -11,9 +11,9 @@ def main():
     path = "output/pvalues.json"
     pvalues = load(path)
     
-    # pvalues[conf][var][test][channel]
+    # pvalues[dc_type][gof_mode][conf][var][test][channel]
     
-    dc_types = ["mc_dc"]
+    dc_types = ["emb_dc"]
     #gof_modes = ["results_w_emb", "results_wo_emb"]
     gof_modes = ["results_w_emb"]
     confs = []
@@ -26,22 +26,18 @@ def main():
     temp = next(temp.itervalues())
     
     for key, value in temp.items():
-        #print key
         confs.append(key)
         
     temp = next(temp.itervalues())
     for key, value in temp.items():
-        #print key
         variables.append(key)
         
-#         
-#     from pandas.io.json import json_normalize
-#     json_normalize(pvalues)
-#     
-#     print pvalues
-
-#     flattened = flatten_json(pvalues)
-#     print flattened
+    ignorevars = ["eta_1", "eta_2"]
+    
+    for igv in ignorevars:
+        variables.remove(igv)
+        
+    print variables 
 
     df = pd.DataFrame(columns=["dc_type", "gof_mode", "conf", "var", "test", "channel", "pvalue"])
         
@@ -58,96 +54,47 @@ def main():
         #                     df = df.append(new_row, ignore_index=True)
                     
             
-    df = pd.DataFrame(rows_list, columns=["dc_type", "gof_mode", "conf", "var", "test", "channel", "pvalue"])     
-    #print df
+    df = pd.DataFrame(rows_list, columns=["dc_type", "gof_mode", "conf", "var", "test", "channel", "pvalue"])  
     
-#     embComparer = EmbComparer(df, dc_types, gof_modes, confs, variables, tests, channels)
-#     embComparer.compareEmbedding()
+    
+    df = df[~df['var'].isin(ignorevars)]
+    
+    failingVarComp = FailingVariableComparer(dc_types, gof_modes, confs, variables, tests, channels)
+#     failingVarComp.set_threshold(0.05)
+#     failingVarComp.printFailingVariables(df)
 #     
-#     return
+#     baseconf = "cc"
+#     configs = ["cc1", "nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10"]
+#     
+#     failingVarComp.compareAgainstBase(df, baseconf, configs)
     
-    
-    threshold = 0.05
-    failing = df.query("pvalue < {0}".format(threshold))
-    
-#     failing = getFailingVars(df, 0.05, "cc", "et", "saturated")
+    failingVarComp.showSideBySide(df, "cc", "nn8")
 
-    failing = failing.query("dc_type == 'mc_dc'")
-    failing = failing.query("gof_mode == 'results_w_emb'")
+    #df.style.apply(highlight_greaterthan_1, axis=1)
+
     
-    #print "failing:"
-    #print failing
-    
-    for conf in confs:
-        f = failing.query("conf == '{0}'".format(conf))
-        vars = list(set(f["var"]))
-        print "failing for {0}: {1}    {2}".format(conf, len(f), vars)
-        
-    print "\n"
-    
-    for test in tests:
-        for conf in confs:
-            f = failing.query("conf == '{0}'".format(conf)) \
-                        .query("test == '{0}'".format(test))
-            vars = list(set(f["var"]))
-            print "failing for {0} {1}: {2}    {3}".format(test, conf, len(f), vars)#
-        print ""
-            
-    print "\n"
-    
-    for channel in channels:
-        for conf in confs:
-            f = failing.query("conf == '{0}'".format(conf)) \
-                        .query("channel == '{0}'".format(channel))
-            vars = list(set(f["var"]))
-            print "failing for {0} {1}: {2}    {3}".format(channel, conf, len(f), vars)
-        print ""
-        
-    for test in tests:
-        for channel in channels:
-            for conf in confs:
-                f = failing.query("conf == '{0}'".format(conf)) \
-                            .query("test == '{0}'".format(test)) \
-                            .query("channel == '{0}'".format(channel))
-                vars = list(set(f["var"]))
-                print "failing for {0} {1} {2}: {3}    {4}".format(test, channel, conf, len(f), vars)#
-            print ""
-        print ""
-            
-#     for channel in channels:
-#         for test in tests:
-#             for conf in confs:
-#                 f = failing.query("conf == '{0}'".format(conf)) \
-#                             .query("test == '{0}'".format(test)) \
-#                             .query("channel == '{0}'".format(channel))
-#                 print "failing for {0} {1} {2}: {3}".format(channel, test, conf, len(f))#
-#             print ""
-#         print ""
-#             
-#     print "\n"
-    
-    baseconf = "cc"
-    #listFailingForConf(conf, failing, tests, channels)
-    
-    configs = ["cc1", "nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10"]
-    
-    for conf in configs:
-        printFailingVariablesDifferentially(conf, baseconf, failing, tests, channels)
-    
-#     makePValuePlots(df, confs, "tt", "saturated")
+#     baseconf = "cc"
+#     #listFailingForConf(conf, failing, tests, channels)
+#     
+#     configs = ["cc1", "nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10"]
+#     
+#     for conf in configs:
+#         printFailingVariablesDifferentially(conf, baseconf, failing, tests, channels)
+#     
+# #     makePValuePlots(df, confs, "tt", "saturated")
+# #         
+# #     fig1 = plt.figure()
+# #     plt.show()
+# 
+#     newdf = df.query("dc_type == 'emb_dc'") \
+#         .query("gof_mode == 'results_w_emb'") \
+#         .query("test == '{0}'".format(test)) \
+#         .query("channel == '{0}'".format(channel)) \
+#         .query("conf == '{0}'".format(conf)) \
 #         
-#     fig1 = plt.figure()
-#     plt.show()
-
-    newdf = df.query("dc_type == 'emb_dc'") \
-        .query("gof_mode == 'results_w_emb'") \
-        .query("test == '{0}'".format(test)) \
-        .query("channel == '{0}'".format(channel)) \
-        .query("conf == '{0}'".format(conf)) \
-        
-    #plotWithThreshold(newdf, threshold)
-    
-    #plotPValues(newdf, ["cc"])
+#     #plotWithThreshold(newdf, threshold)
+#     
+#     #plotPValues(newdf, ["cc"])
 
 
 def plotWithThreshold(df, threshold):
@@ -204,7 +151,169 @@ class EmbComparer():
                 print ""
             print ""
             data = self.df.query()
+            
+            
+class PValueComparer():
+    def __init__(self, dc_types, gof_modes, confs, variables, tests, channels):
+        self.dc_types = dc_types
+        self.gof_modes = gof_modes
+        self.confs = confs
+        self.variables = variables
+        self.tests = tests
+        self.channels = channels
+
+    def compareEmbedding(self):
+#         threshold = 0.05
+#         failing = self.df.query("pvalue < {0}".format(threshold))
+#         print failing
+#         failing = failing.query("dc_type == 'mc_dc'")
+#         failing = failing.query("gof_mode == 'results_wo_emb'")
+        for test in self.tests:
+            for channel in self.channels:
+                for conf in self.confs:       
+                    for variable in self.variables:             
+#                     for dc_type in self.dc_types:
+#                         for gof_mode in self.gof_modes:             
+#                     f = failing.query("dc_type == '{0}'".format(dc_type)) \
+#                                 .query("gof_mode == '{0}'".format(gof_mode)) \
+#                                 .query("conf == '{0}'".format(conf)) \
+#                                 .query("test == '{0}'".format(test)) \
+#                                 .query("channel == '{0}'".format(channel))
+                                
+                        f = self.df.query("conf == '{0}'".format(conf)) \
+                                    .query("test == '{0}'".format(test)) \
+                                    .query("channel == '{0}'".format(channel)) \
+                                    .query("var == '{0}'".format(variable))
+                                    
+                        print f
+#                             print "failing for {0} {1} {2}: {3}".format(test, channel, conf, len(f))#
+                        print ""
+                    print ""
+                print ""
+            print ""
+            data = self.df.query()
+            
+            
+class FailingVariableComparer():
+    def __init__(self, dc_types, gof_modes, confs, variables, tests, channels):
+        self.dc_types = dc_types
+        self.gof_modes = gof_modes
+        self.confs = confs
+        self.variables = variables
+        self.tests = tests
+        self.channels = channels
+        self.threshold = 0.05
+        
+    def set_threshold(self, threshold):
+        self.threshold = threshold
+        
+    def getFailingVariables(self, df):
+        failing = df.query("pvalue < {0}".format(self.threshold))
+        return failing
+        
+    def printFailingVariables(self, df, mode="default"):
+        failing = self.getFailingVariables(df)
+        
+        if mode == "default":
+            self.printByConf(failing)
+            self.printByTestConf(failing)
+            self.printByChannelConf(failing)
+            self.printByTestChannelConf(failing)
+            
+    def compareAgainstBase(self, df, baseconf, configs):
+        for conf in configs:
+            self.printFailingVariablesDifferentially(df, baseconf, conf)                
     
+    def printByConf(self, failing):
+        for conf in self.confs:
+            f = failing.query("conf == '{0}'".format(conf))
+            vars = list(set(f["var"]))
+            print "failing for {0}: {1}    {2}".format(conf, len(f), vars)
+    
+    def printByTestConf(self, failing):
+        for test in self.tests:
+            for conf in self.confs:
+                f = failing.query("conf == '{0}'".format(conf)) \
+                            .query("test == '{0}'".format(test))
+                vars = list(set(f["var"]))
+                print "failing for {0} {1}: {2}    {3}".format(test, conf, len(f), vars)#
+            print ""
+    
+    def printByChannelConf(self, failing):
+        for channel in self.channels:
+            for conf in self.confs:
+                f = failing.query("conf == '{0}'".format(conf)) \
+                            .query("channel == '{0}'".format(channel))
+                vars = list(set(f["var"]))
+                print "failing for {0} {1}: {2}    {3}".format(channel, conf, len(f), vars)
+            print ""
+    
+    def printByTestChannelConf(self, failing):
+        for test in self.tests:
+            for channel in self.channels:
+                for conf in self.confs:
+                    f = failing.query("conf == '{0}'".format(conf)) \
+                                .query("test == '{0}'".format(test)) \
+                                .query("channel == '{0}'".format(channel))
+                    vars = list(set(f["var"]))
+                    print "failing for {0} {1} {2}: {3}    {4}".format(test, channel, conf, len(f), vars)#
+                print ""
+            print ""
+    
+    def printFailingVariablesDifferentially(self, df, baseconf, conf, verbose=True):        
+        failing = self.getFailingVariables(df)
+        for test in self.tests:
+            for channel in self.channels:
+                f = failing.query("conf == '{0}'".format(conf)) \
+                            .query("test == '{0}'".format(test)) \
+                            .query("channel == '{0}'".format(channel))
+                            
+                fbase = failing.query("conf == '{0}'".format(baseconf)) \
+                            .query("test == '{0}'".format(test)) \
+                            .query("channel == '{0}'".format(channel))
+                            
+                vars = list(f["var"])
+                basevars = list(fbase["var"])
+                            
+                failing_comp_only = []
+                for v in vars:
+                    if v not in basevars:
+                        failing_comp_only.append(v)
+                
+                print "failing for {0} {1} {2} but NOT {3}: {4}    {5}".format(test, channel, conf, baseconf, len(failing_comp_only), failing_comp_only)
+                
+                
+                failing_base_only = []
+                for v in basevars:
+                    if v not in vars:
+                        failing_base_only.append(v)
+                
+                print "failing for {0} {1} {3} but NOT {2}: {4}    {5}".format(test, channel, conf, baseconf, len(failing_base_only), failing_base_only)
+                                
+                if verbose:
+                    diff_failing_union = failing_comp_only + failing_base_only                    
+                    print "comparison:"
+                    dfcomparison = df[df['var'].isin(diff_failing_union)]
+                    dfcomparison = dfcomparison[dfcomparison['conf'].isin([conf, baseconf])] \
+                            .query("test == '{0}'".format(test)) \
+                            .query("channel == '{0}'".format(channel))
+                    print dfcomparison
+                
+            print ""
+            
+    def showSideBySide(self, df, baseconf, conf, test="saturated", channel="et"):    
+        subset = df[df['conf'].isin([conf, baseconf])]        
+        print subset
+        
+        subset = subset.query("test == '{0}'".format(test)) \
+                        .query("channel == '{0}'".format(channel))
+                        
+        print subset
+        
+        subset = subset.sort_values(by=["var", "conf"])
+        print subset
+        
+        #dff.groupby('B').filter(lambda x: len(x['C']) > 2)
 
 def printFailingVariablesDifferentially(conf, baseconf, failing, tests, channels):
         
@@ -235,53 +344,7 @@ def printFailingVariablesDifferentially(conf, baseconf, failing, tests, channels
             
             print "failing for {0} {1} {3} but NOT {2}: {4}    {5}".format(test, channel, conf, baseconf, len(failing_base_only), failing_base_only)
         print ""
-
-def listFailingForConf(conf, failing, tests, channels):
-    print "failing for {0}:".format(conf)
-    print failing.query("conf == '{0}'".format(conf))
-    
-    print "\n"
-    
-    for test in tests:
-        f = failing.query("conf == '{0}'".format(conf)) \
-                    .query("test == '{0}'".format(test))
-        print "failing for {0} {1}: {2}".format(test, conf, len(f))#
-        print f
-        print ""
-            
-    print "\n"
-    
-    for channel in channels:
-        f = failing.query("conf == '{0}'".format(conf)) \
-                    .query("channel == '{0}'".format(channel))
-        print "failing for {0} {1}: {2}".format(channel, conf, len(f))
-        print f
-        print ""
         
-        
-    for test in tests:
-        for channel in channels:
-            f = failing.query("conf == '{0}'".format(conf)) \
-                        .query("test == '{0}'".format(test)) \
-                        .query("channel == '{0}'".format(channel))
-            print "failing for {0} {1} {2}: {3}".format(test, channel, conf, len(f))#
-            print f
-            print ""
-        print ""
-        
-    print "\n"
-            
-#     for channel in channels:
-#         for test in tests:
-#             f = failing.query("conf == '{0}'".format(conf)) \
-#                         .query("test == '{0}'".format(test)) \
-#                         .query("channel == '{0}'".format(channel))
-#             print "failing for {0} {1} {2}: {3}".format(channel, test, conf, len(f))#
-#             print ""
-#             print f
-#         print ""
-#             
-#     print "\n"
     
 def getVarsInRange(df, lower, upper):         
     varsInRange = df.query("conf == 'cc'") \
