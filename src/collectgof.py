@@ -34,7 +34,7 @@ def main():
     
     channels = ["et", "mt", "tt"]
     
-    dc_types = ["mc_dc"]
+    dc_types = ["mc_dc", "emb_dc"]
     #dc_types = ["mc_dc", "emb_dc"]
     gof_modes = ["results_wo_emb"]
     #gof_modes = ["results_w_emb", "results_wo_emb"]

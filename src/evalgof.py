@@ -1,13 +1,29 @@
 import json
-import matplotlib as mpl
+#import matplotlib as mpl
 # mpl.use('Agg')
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 
+import ipywidgets as widgets
+from IPython import display
 
-def main():
-    #path = "output3/pvalues3.json"
+
+
+
+def highlight_greaterthan(s,column):
+    is_max = pd.Series(data=False, index=s.index)
+    is_max[column] = s.loc[column] >= 1
+    return ['background-color: red' if is_max.any() else '' for v in is_max]
+ 
+def highlight_greaterthan_1(s):
+    if s.B > 1.0:
+        return ['background-color: yellow']*5
+    else:
+        return ['background-color: white']*5
+
+
+def getDataFrame(ignorevars):
     path = "output/pvalues.json"
     pvalues = load(path)
     
@@ -31,8 +47,6 @@ def main():
     temp = next(temp.itervalues())
     for key, value in temp.items():
         variables.append(key)
-        
-    ignorevars = ["eta_1", "eta_2"]
     
     for igv in ignorevars:
         variables.remove(igv)
@@ -54,8 +68,14 @@ def main():
         #                     df = df.append(new_row, ignore_index=True)
                     
             
-    df = pd.DataFrame(rows_list, columns=["dc_type", "gof_mode", "conf", "var", "test", "channel", "pvalue"])  
+    df = pd.DataFrame(rows_list, columns=["dc_type", "gof_mode", "conf", "var", "test", "channel", "pvalue"]) 
     
+    return df
+
+def main():      
+            
+    ignorevars = ["eta_1", "eta_2"]
+    df = getDataFrame(ignorevars)    
     
     df = df[~df['var'].isin(ignorevars)]
     
@@ -313,7 +333,30 @@ class FailingVariableComparer():
         subset = subset.sort_values(by=["var", "conf"])
         print subset
         
+        subset.style.apply(highlight_greaterthan_1, axis=1)
+        
+        #display(subset)
+        
+        # create output widgets
+        widget1 = widgets.Output()
+        #widget2 = widgets.Output()
+        
+        # render in output widgets
+        with widget1:
+            display.display(subset)
+        #with widget2:
+            #display.display(df2)
+        
+        # create HBox
+        #hbox = widgets.HBox([widget1, widget2])
+        hbox = widgets.HBox([widget1])
+        
+        # render hbox
+        hbox
+        
         #dff.groupby('B').filter(lambda x: len(x['C']) > 2)
+
+
 
 def printFailingVariablesDifferentially(conf, baseconf, failing, tests, channels):
         
