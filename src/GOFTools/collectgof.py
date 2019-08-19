@@ -5,8 +5,9 @@ import os
 
 def main():
     
-    configurations = ["cc", "cc1", "nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10"]
-    #configurations = ["cc", "cc1", "nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10"] 
+    #configurations = ["cc", "cc1", "nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10"]
+    
+    configurations = ["cc", "cc1", "nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10", "nn11", "nn13", "nn15", "nn16"] 
     #configurations = ["nn1", "nn1_alternative"] 
     
     variables = ["pt_1", 
@@ -34,9 +35,9 @@ def main():
     
     channels = ["et", "mt", "tt"]
     
-    dc_types = ["mc_dc", "emb_dc"]
+    dc_types = ["emb_dc"]
     #dc_types = ["mc_dc", "emb_dc"]
-    gof_modes = ["results_wo_emb"]
+    gof_modes = ["results_w_emb"]
     #gof_modes = ["results_w_emb", "results_wo_emb"]
     base = "/afs/cern.ch/work/m/msajatov/private/cms/CMSSW_8_1_0/src/CombineHarvester/HTTSM2017/{0}/{1}/{2}/gof/2017"
     

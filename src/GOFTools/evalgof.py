@@ -4,13 +4,14 @@ import json
 #import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
+import sys
+sys.path.append("../") # go to parent dir
     
 
 
 def loadDF(relpath):
     
-    path = "output/pvalues.json"
-    pvalues = load(path)
+    pvalues = load(relpath)
     
     # pvalues[dc_type][gof_mode][conf][var][test][channel]
     
@@ -58,7 +59,7 @@ def compareFailingVars(df, modes=[]):
     dc_types = ["emb_dc"]
     #gof_modes = ["results_w_emb", "results_wo_emb"]
     gof_modes = ["results_w_emb"]
-    confs = ["cc", "cc1", "nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10"]
+    confs = ["cc", "cc1", "nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10", "nn11", "nn13", "nn15", "nn16"]
     variables = []
     tests = ["saturated", "KS", "AD"]
     channels = ["et", "mt", "tt"]
@@ -76,7 +77,7 @@ def compareAgainstBase(df):
     dc_types = ["emb_dc"]
     #gof_modes = ["results_w_emb", "results_wo_emb"]
     gof_modes = ["results_w_emb"]
-    confs = ["cc", "cc1", "nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10"]
+    confs = ["cc", "cc1", "nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10", "nn11", "nn13", "nn15", "nn16"]
     variables = []
     tests = ["saturated", "KS", "AD"]
     channels = ["et", "mt", "tt"]
@@ -85,101 +86,25 @@ def compareAgainstBase(df):
     failingVarComp.set_threshold(0.05)
      
     baseconf = "cc"
-    configs = ["cc1", "nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10"]
+    configs = ["cc1", "nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10", "nn11", "nn13", "nn15", "nn16"]
       
     failingVarComp.compareAgainstBase(df, baseconf, configs)    
 
 
 def main():      
-            
-            
-    path = "output/pvalues.json"
-    pvalues = load(path)
-    
-    # pvalues[dc_type][gof_mode][conf][var][test][channel]
-    
-    ignorevars = ["eta_1", "eta_2"]
-    
-    dc_types = ["emb_dc"]
-    #gof_modes = ["results_w_emb", "results_wo_emb"]
-    gof_modes = ["results_w_emb"]
-    confs = []
-    variables = []
-    tests = ["saturated", "KS", "AD"]
-    channels = ["et", "mt", "tt"]       
-        
-    temp = next(pvalues.itervalues())
-    temp = next(temp.itervalues())
-    
-    for key, value in temp.items():
-        confs.append(key)
-        
-    temp = next(temp.itervalues())
-    for key, value in temp.items():
-        variables.append(key)
-    
-    for igv in ignorevars:
-        variables.remove(igv)
-        
-    print variables 
+    df = loadDF("../output/pvalues.json")
+    base = "cc"
+    configs = ["cc1", "nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10", "nn11", "nn13", "nn15", "nn16"]
 
-    #df = pd.DataFrame(columns=["dc_type", "gof_mode", "conf", "var", "test", "channel", "pvalue"])
-        
-    # this is much faster than adding to the df row by row
-    rows_list = []
-    for dc_type_key, dc_type_val in pvalues.items():
-        for gof_mode_key, gof_mode_val in dc_type_val.items():            
-            for confkey, confval in gof_mode_val.items():
-                for varkey, varval in confval.items():
-                    for testkey, testval in varval.items():
-                        for chkey, chval in testval.items():
-                            new_row = {'dc_type':dc_type_key, 'gof_mode':gof_mode_key, 'conf':confkey, 'var':varkey, 'test':testkey, 'channel':chkey, 'pvalue':chval}
-                            rows_list.append(new_row)
-        #                     df = df.append(new_row, ignore_index=True)
-                    
-            
-    df = pd.DataFrame(rows_list, columns=["dc_type", "gof_mode", "conf", "var", "test", "channel", "pvalue"])            
-    
-    
-    df = df[~df['var'].isin(ignorevars)]
-    
-    failingVarComp = FailingVariableComparer(dc_types, gof_modes, confs, variables, tests, channels)
-#     failingVarComp.set_threshold(0.05)
-#     failingVarComp.printFailingVariables(df)
-#     
-#     baseconf = "cc"
-#     configs = ["cc1", "nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10"]
-#     
-#     failingVarComp.compareAgainstBase(df, baseconf, configs)
-    
-    failingVarComp.showSideBySide2(df, "cc", ["nn6", "nn8"])
+    cols = [base] + configs
 
-    #df.style.apply(highlight_greaterthan_1, axis=1)
-
+    print df
     
-#     baseconf = "cc"
-#     #listFailingForConf(conf, failing, tests, channels)
+#     result = compareSideBySide(df, "cc", configs, "saturated", "et")
 #     
-#     configs = ["cc1", "nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10"]
-#     
-#     for conf in configs:
-#         printFailingVariablesDifferentially(conf, baseconf, failing, tests, channels)
-#     
-# #     makePValuePlots(df, confs, "tt", "saturated")
-# #         
-# #     fig1 = plt.figure()
-# #     plt.show()
-# 
-#     newdf = df.query("dc_type == 'emb_dc'") \
-#         .query("gof_mode == 'results_w_emb'") \
-#         .query("test == '{0}'".format(test)) \
-#         .query("channel == '{0}'".format(channel)) \
-#         .query("conf == '{0}'".format(conf)) \
-#         
-#     #plotWithThreshold(newdf, threshold)
-#     
-#     #plotPValues(newdf, ["cc"])
-    return df
+#     print result
+
+    compareFailingVars(df)
 
 
 def compareSideBySide(df, baseconf, configs, test="saturated", channel="et"):  
