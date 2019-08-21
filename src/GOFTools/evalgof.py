@@ -5,8 +5,12 @@ import json
 import pandas as pd
 import numpy as np
 import sys
+import argparse
 sys.path.append("../") # go to parent dir
     
+parser = argparse.ArgumentParser()
+parser.add_argument('-c', dest='channel', help='Decay channel', choices = ['mt', 'et', 'tt', 'all'], default='all')
+args = parser.parse_args()
 
 
 def loadDF(relpath):
@@ -16,6 +20,7 @@ def loadDF(relpath):
     # pvalues[dc_type][gof_mode][conf][var][test][channel]
     
     ignorevars = ["eta_1", "eta_2"]
+    #ignorevars = []
     
     dc_types = ["emb_dc"]
     #gof_modes = ["results_w_emb", "results_wo_emb"]
@@ -59,7 +64,7 @@ def compareFailingVars(df, modes=[]):
     dc_types = ["emb_dc"]
     #gof_modes = ["results_w_emb", "results_wo_emb"]
     gof_modes = ["results_w_emb"]
-    confs = ["cc", "cc1", "nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10", "nn11", "nn13", "nn15", "nn16"]
+    confs = ["cc", "cc1", "nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10", "nn11", "nn13", "nn15", "nn16", "nn17", "nn18"]
     variables = []
     tests = ["saturated", "KS", "AD"]
     channels = ["et", "mt", "tt"]
@@ -77,7 +82,7 @@ def compareAgainstBase(df):
     dc_types = ["emb_dc"]
     #gof_modes = ["results_w_emb", "results_wo_emb"]
     gof_modes = ["results_w_emb"]
-    confs = ["cc", "cc1", "nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10", "nn11", "nn13", "nn15", "nn16"]
+    confs = ["cc", "cc1", "nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10", "nn11", "nn13", "nn15", "nn16", "nn17", "nn18"]
     variables = []
     tests = ["saturated", "KS", "AD"]
     channels = ["et", "mt", "tt"]
@@ -86,15 +91,15 @@ def compareAgainstBase(df):
     failingVarComp.set_threshold(0.05)
      
     baseconf = "cc"
-    configs = ["cc1", "nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10", "nn11", "nn13", "nn15", "nn16"]
+    configs = ["cc1", "nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10", "nn11", "nn13", "nn15", "nn16", "nn17", "nn18"]
       
     failingVarComp.compareAgainstBase(df, baseconf, configs)    
 
 
 def main():      
-    df = loadDF("../output/pvalues.json")
+    df = loadDF("../output/{0}_pvalues.json".format(args.channel))
     base = "cc"
-    configs = ["cc1", "nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10", "nn11", "nn13", "nn15", "nn16"]
+    configs = ["cc1", "nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10", "nn11", "nn13", "nn15", "nn16", "nn17", "nn18"]
 
     cols = [base] + configs
 
@@ -228,7 +233,7 @@ class FailingVariableComparer():
         self.threshold = threshold
         
     def getFailingVariables(self, df):
-        failing = df.query("pvalue < {0}".format(self.threshold))
+        failing = df.query("pvalue <= {0}".format(self.threshold))
         return failing
         
     def printFailingVariables(self, df, modes=[]):

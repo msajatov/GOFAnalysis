@@ -1,13 +1,17 @@
 import json
 import os
-
+import argparse
 
 
 def main():
     
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-c', dest='channel', help='Decay channel', choices = ['mt', 'et', 'tt', 'all'], default='all')
+    args = parser.parse_args()
+    
     #configurations = ["cc", "cc1", "nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10"]
     
-    configurations = ["cc", "cc1", "nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10", "nn11", "nn13", "nn15", "nn16"] 
+    configurations = ["cc", "cc1", "nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10", "nn11", "nn13", "nn15", "nn16", "nn17", "nn18"] 
     #configurations = ["nn1", "nn1_alternative"] 
     
     variables = ["pt_1", 
@@ -33,7 +37,10 @@ def main():
     
     tests = ["saturated", "KS", "AD"]
     
-    channels = ["et", "mt", "tt"]
+    if args.channel == "all":
+        channels = ["et", "mt", "tt"]
+    else:
+        channels = [args.channel]
     
     dc_types = ["emb_dc"]
     #dc_types = ["mc_dc", "emb_dc"]
@@ -95,7 +102,7 @@ def main():
     
     #saveAsJson(pvalues, "pvalues")
     
-    saveAsJson(completepvalues, "pvalues")
+    saveAsJson(completepvalues, "{0}_pvalues".format(args.channel))
     
     
 def saveAsJson(pvalues, filename):
