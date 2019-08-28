@@ -11,7 +11,7 @@ def main():
     
     #configurations = ["cc", "cc1", "nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10"]
     
-    configurations = ["cc", "cc1", "nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10", "nn11", "nn13", "nn15", "nn16", "nn17", "nn18"] 
+    configurations = ["cc", "cc1", "nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10", "nn11", "nn13", "nn15", "nn16", "nn17", "nn18", "nn21"] 
     #configurations = ["nn1", "nn1_alternative"] 
     
     variables = ["pt_1", 
@@ -41,6 +41,10 @@ def main():
         channels = ["et", "mt", "tt"]
     else:
         channels = [args.channel]
+        
+    if args.channel == "tt":
+        configurations = ["cc", "cc1", "nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10", 
+                          "nn11", "nn13", "nn15", "nn16", "nn17", "nn18", "nn19", "nn20", "nn15a", "nn16a", "nn17a", "nn18a"]
     
     dc_types = ["emb_dc"]
     #dc_types = ["mc_dc", "emb_dc"]
