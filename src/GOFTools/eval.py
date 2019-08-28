@@ -157,12 +157,30 @@ def makePdf():
     
     cols = [base] + configs
     
-    result = evalgof.compareSideBySide(df, "cc", configs, "saturated", "et")
+    html = ""
+    
+    result = evalgof.compareSideBySide(df, "cc", configs, "saturated", "tt")
     styler = result.style.applymap(color_negative_red) \
                 .apply(highlight_greater_than_base, subset=cols, axis=1) \
                 .apply(highlight_max, subset=cols, axis=1)
                 
-    html = styler.render()
+    html = html + styler.render()
+    
+    result = evalgof.compareSideBySide(df, "cc", configs, "KS", "tt")
+    styler = result.style.applymap(color_negative_red) \
+                .apply(highlight_greater_than_base, subset=cols, axis=1) \
+                .apply(highlight_max, subset=cols, axis=1)
+                
+    html = html + "<br/>"
+    html = html + styler.render()
+    
+    result = evalgof.compareSideBySide(df, "cc", configs, "AD", "tt")
+    styler = result.style.applymap(color_negative_red) \
+                .apply(highlight_greater_than_base, subset=cols, axis=1) \
+                .apply(highlight_max, subset=cols, axis=1)
+                
+    html = html + "<br/>"
+    html = html + styler.render()
                 
                 
     import pandas as pd
