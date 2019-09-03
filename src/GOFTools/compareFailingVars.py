@@ -7,10 +7,12 @@ import numpy as np
 import sys
 import argparse
 sys.path.append("../") # go to parent dir
+
+import sys
+sys.path.append("../") # go to parent dir
+import GOFTools.evalgof as evalgof
     
-parser = argparse.ArgumentParser()
-parser.add_argument('-c', dest='channel', help='Decay channel', choices = ['mt', 'et', 'tt', 'all'], default='all')
-args = parser.parse_args()
+
 
 
 def loadDF(relpath):
@@ -97,20 +99,19 @@ def compareAgainstBase(df):
 
 
 def main():      
+    
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-c', dest='channel', help='Decay channel', choices = ['mt', 'et', 'tt', 'all'], default='all')
+    args = parser.parse_args()
+    
     print args.channel
     df = loadDF("../output/{0}_pvalues.json".format(args.channel))
-    base = "cc"
-    configs = ["cc1", "nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10", "nn11", "nn13", "nn15", "nn16", "nn17", "nn18"]
-
-    cols = [base] + configs
-
-    print df
     
 #     result = compareSideBySide(df, "cc", configs, "saturated", "et")
 #     
 #     print result
 
-    compareFailingVars(df)
+    evalgof.compareFailingVars(df, args.channel)
 
 
 def compareSideBySide(df, baseconf, configs, test="saturated", channel="et"):  

@@ -7,6 +7,8 @@ import numpy as np
 import sys
 sys.path.append("../") # go to parent dir
 
+import argparse
+
 
 import sys
 sys.path.append("../") # go to parent dir
@@ -128,64 +130,64 @@ def compareAgainstBase(df):
 
 def main():
     
-#     df = loadDF("../output/{0}_pvalues.json".format(args.channel))
-#     base = "cc"
-#     configs = ["cc1", "nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10", "nn11", "nn13", "nn15", "nn16", "nn17", "nn18"]
-# 
-#     cols = [base] + configs
-# 
-#     print df
-#     
-# #     result = compareSideBySide(df, "cc", configs, "saturated", "et")
-# #     
-# #     print result
-# 
-#     compareFailingVars(df)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-c', dest='channel', help='Decay channel', choices = ['mt', 'et', 'tt', 'all'], default='all')
+    args = parser.parse_args()
 
-    makePdf()
+    makePdf(args.channel)
     
     
-def makePdf():
+def makePdf(channel):
     reload(GOFTools.evalgof)
     from IPython.display import display, HTML
     import GOFTools.evalgof as evalgof
-    df = evalgof.loadDF("../output/all_pvalues.json")
+    df = evalgof.loadDF("../output/{0}_pvalues.json".format(channel))
+    
+    print df
     
     base = "cc"
-    configs = ["cc1", "nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10", "nn11", 
+    if "all" in channel:
+        configs = ["cc1", "nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10", "nn11", 
                "nn13", "nn15", "nn16", "nn17", "nn18", "nn21"]
+        channels = ["et", "mt", "tt"]
+    else:
+#         configs = ["cc1", "nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10", "nn11", "nn13", "nn15", 
+#                  "nn16", "nn17", "nn18", "nn19", "nn20", "nn15a", "nn16a", "nn17a", "nn18a"]
+        configs = ["cc1", "nn5", "nn10", "nn13", "nn15", "nn15a", "nn16", "nn16a", "nn17", "nn17a", "nn18", "nn18a", "nn19", "nn20"]
+        channels = ["tt"]
     
     cols = [base] + configs
     
-    html = ""
-    
-    result = evalgof.compareSideBySide(df, "cc", configs, "saturated", "tt")
-    styler = result.style.applymap(color_negative_red) \
-                .apply(highlight_greater_than_base, subset=cols, axis=1) \
-                .apply(highlight_max, subset=cols, axis=1)
-                
-    html = html + styler.render()
-    
-    result = evalgof.compareSideBySide(df, "cc", configs, "KS", "tt")
-    styler = result.style.applymap(color_negative_red) \
-                .apply(highlight_greater_than_base, subset=cols, axis=1) \
-                .apply(highlight_max, subset=cols, axis=1)
-                
-    html = html + "<br/>"
-    html = html + styler.render()
-    
-    result = evalgof.compareSideBySide(df, "cc", configs, "AD", "tt")
-    styler = result.style.applymap(color_negative_red) \
-                .apply(highlight_greater_than_base, subset=cols, axis=1) \
-                .apply(highlight_max, subset=cols, axis=1)
-                
-    html = html + "<br/>"
-    html = html + styler.render()
-                
-                
-    import pandas as pd
-    import pdfkit as pdf
-    pdf.from_string(html, 'out.pdf')
+    for ch in channels:    
+        html = ""
+        
+        result = evalgof.compareSideBySide(df, "cc", configs, "saturated", ch)
+        styler = result.style.applymap(color_negative_red) \
+                    .apply(highlight_greater_than_base, subset=cols, axis=1) \
+                    .apply(highlight_max, subset=cols, axis=1)
+                    
+        html = html + styler.render()
+        
+        result = evalgof.compareSideBySide(df, "cc", configs, "KS", ch)
+        styler = result.style.applymap(color_negative_red) \
+                    .apply(highlight_greater_than_base, subset=cols, axis=1) \
+                    .apply(highlight_max, subset=cols, axis=1)
+                    
+        html = html + "<br/>"
+        html = html + styler.render()
+        
+        result = evalgof.compareSideBySide(df, "cc", configs, "AD", ch)
+        styler = result.style.applymap(color_negative_red) \
+                    .apply(highlight_greater_than_base, subset=cols, axis=1) \
+                    .apply(highlight_max, subset=cols, axis=1)
+                    
+        html = html + "<br/>"
+        html = html + styler.render()
+                    
+                    
+        import pandas as pd
+        import pdfkit as pdf
+        pdf.from_string(html, '{0}_complete.pdf'.format(ch))
                 
 #     import pandas as pd
 #     import pdfkit as pdf
@@ -216,34 +218,8 @@ def compareSideBySide(df, baseconf, configs, test="saturated", channel="et"):
         
     #printWithStyle(result)
     #applyStyle(result)
-    return result
-        
-        
-def printWithStyle(df):
-    columns = list(df.columns)
-    columns.remove("dc_type")
-    columns.remove("gof_mode")
-    columns.remove("var")
-    columns.remove("test")
-    columns.remove("channel")
-    
-    df.style.apply(color_negative_red, subset=columns, axis=1)
-    widget1 = widgets.Output()
-    with widget1:
-        display.display(df)
-    hbox = widgets.HBox([widget1])
-    hbox  
-    
-def applyStyle(df):
-    columns = list(df.columns)
-    columns.remove("dc_type")
-    columns.remove("gof_mode")
-    columns.remove("var")
-    columns.remove("test")
-    columns.remove("channel")
-    
-    #print columns
-    df.style.apply(color_negative_red, subset=columns, axis=1)
+    return result    
+
 
 def plotWithThreshold(df, threshold):
     

@@ -55,18 +55,26 @@ def loadDF(relpath):
     return df
 
 
-def compareFailingVars(df, modes=[]):
+def compareFailingVars(df, channel, modes=[]):
     dc_types = ["emb_dc"]
     #gof_modes = ["results_w_emb", "results_wo_emb"]
     gof_modes = ["results_w_emb"]
-    confs = ["cc", "cc1", "nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10", "nn11", "nn13", "nn15", "nn16", "nn17", "nn18"]
+    
+    if "all" in channel:
+        confs = ["cc", "cc1", "nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10", "nn11", "nn13", "nn15", 
+                 "nn16", "nn17", "nn18", "nn21"]
+        channels = ["et", "mt", "tt"]
+    else:
+        confs = ["cc", "cc1", "nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10", "nn11", "nn13", "nn15", 
+                 "nn15a", "nn16", "nn16a", "nn17", "nn17a", "nn18", "nn18a", "nn19", "nn20"]
+        channels = ["tt"]
     variables = []
     tests = ["saturated", "KS", "AD"]
-    channels = ["et", "mt", "tt"]
+    
     
     failingVarComp = FailingVariableComparer(dc_types, gof_modes, confs, variables, tests, channels)
     failingVarComp.set_threshold(0.05)
-    failingVarComp.printFailingVariables(df, ["conf", "testchannelconf"])
+    failingVarComp.printFailingVariables(df, ["conf", "channelconf", "testchannelconf"])
      
 #     baseconf = "cc"
 #     configs = ["cc1", "nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10"]
@@ -92,19 +100,15 @@ def compareAgainstBase(df):
 
 
 def main():      
-    df = loadDF("../output/{0}_pvalues.json".format(args.channel))
-    base = "cc"
-    configs = ["cc1", "nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10", "nn11", "nn13", "nn15", "nn16", "nn17", "nn18"]
-
-    cols = [base] + configs
-
-    print df
+    
+    print "Sorry, not implemented. Use this as part of a module and call the functions."
+#     df = loadDF("../output/{0}_pvalues.json".format(args.channel))
     
 #     result = compareSideBySide(df, "cc", configs, "saturated", "et")
 #     
 #     print result
 
-    compareFailingVars(df)
+#     compareFailingVars(df, args.channel)
 
 
 def compareSideBySide(df, baseconf, configs, test="saturated", channel="et"):  
