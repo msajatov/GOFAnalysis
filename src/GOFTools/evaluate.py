@@ -64,14 +64,14 @@ def compareFailingVars(df, modes=[]):
     dc_types = ["emb_dc"]
     #gof_modes = ["results_w_emb", "results_wo_emb"]
     gof_modes = ["results_w_emb"]
-    confs = ["cc", "cc1", "nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10", "nn11", "nn13", "nn15", "nn16", "nn17", "nn18", "nn19", "nn20", "nn15a", "nn16a", "nn17a", "nn18a"]
+    confs = ["cc", "cc1", "nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10", "nn11", "nn13", "nn15", "nn16", "nn17", "nn18", "nn21"]
     variables = []
     tests = ["saturated", "KS", "AD"]
     channels = ["et", "mt", "tt"]
     
     failingVarComp = FailingVariableComparer(dc_types, gof_modes, confs, variables, tests, channels)
     failingVarComp.set_threshold(0.05)
-    failingVarComp.printFailingVariables(df, ["conf", "testchannelconf"])
+    failingVarComp.printFailingVariables(df, ["conf", "channelconf", "testchannelconf"])
      
 #     baseconf = "cc"
 #     configs = ["cc1", "nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10"]
@@ -82,7 +82,7 @@ def compareAgainstBase(df):
     dc_types = ["emb_dc"]
     #gof_modes = ["results_w_emb", "results_wo_emb"]
     gof_modes = ["results_w_emb"]
-    confs = ["cc", "cc1", "nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10", "nn11", "nn13", "nn15", "nn16", "nn17", "nn18"]
+    confs = ["cc", "cc1", "nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10", "nn11", "nn13", "nn15", "nn16", "nn17", "nn18", "nn21"]
     variables = []
     tests = ["saturated", "KS", "AD"]
     channels = ["et", "mt", "tt"]
@@ -91,12 +91,13 @@ def compareAgainstBase(df):
     failingVarComp.set_threshold(0.05)
      
     baseconf = "cc"
-    configs = ["cc1", "nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10", "nn11", "nn13", "nn15", "nn16", "nn17", "nn18"]
+    configs = ["cc1", "nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10", "nn11", "nn13", "nn15", "nn16", "nn17", "nn18", "nn21"]
       
     failingVarComp.compareAgainstBase(df, baseconf, configs)    
 
 
 def main():      
+    print args.channel
     df = loadDF("../output/{0}_pvalues.json".format(args.channel))
     base = "cc"
     configs = ["cc1", "nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10", "nn11", "nn13", "nn15", "nn16", "nn17", "nn18"]
