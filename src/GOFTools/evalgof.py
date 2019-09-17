@@ -61,12 +61,15 @@ def compareFailingVars(df, channel, modes=[]):
     gof_modes = ["results_w_emb"]
     
     if "all" in channel:
-        confs = ["cc", "cc1", "nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10", "nn11", "nn13", "nn15", 
+        confs = ["cc", "cc1", "cc2", "nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10", "nn11", "nn13", "nn14", "nn15", 
                  "nn16", "nn17", "nn18", "nn21"]
         channels = ["et", "mt", "tt"]
     else:
-        confs = ["cc", "cc1", "nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10", "nn11", "nn13", "nn15", 
-                 "nn15a", "nn16", "nn16a", "nn17", "nn17a", "nn18", "nn18a", "nn19", "nn20"]
+        confs = ["cc", "cc1", "cc2", "nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10", "nn11", "nn13", "nn13a2", "nn14",
+                 "nn14a2", "nn15", 
+                 "nn15a", "nn15a2", "nn16", "nn16a", "nn16a2", "nn17", "nn17a", "nn17a2", "nn18", "nn18a", "nn18a2", "nn19", "nn20",
+                 "nn1a2", "nn2a2", "nn3a2", "nn4a2", "nn5a2", "nn6a2", "nn7a2", "nn8a2", "nn9a2", "nn10a2", "nn11a2", "nn12a2",
+                 "nn11e", "nn12e", "nn14e", "nn16e", "nn18e"]
         channels = ["tt"]
     variables = []
     tests = ["saturated", "KS", "AD"]
@@ -111,9 +114,14 @@ def main():
 #     compareFailingVars(df, args.channel)
 
 
-def compareSideBySide(df, baseconf, configs, test="saturated", channel="et"):  
+def compareSideBySide(df, baseconf, configs, test="saturated", channel="et", merge_on=["dc_type", "gof_mode", "var", "test", "channel"]):  
     subset = df.query("test == '{0}'".format(test)) \
-                        .query("channel == '{0}'".format(channel))                        
+                        .query("channel == '{0}'".format(channel))  
+    
+    # only keep necessary columns (otherwise problems with merge)
+    subset = subset.loc[:, merge_on + ["pvalue"] + ["conf"]]    
+    print "subset:"
+    print subset                      
         
     subset = subset.sort_values(by=["var", "conf"])
     basedf = subset.query("conf == '{0}'".format(baseconf))  
@@ -129,7 +137,7 @@ def compareSideBySide(df, baseconf, configs, test="saturated", channel="et"):
         confdf = confdf.drop("conf", axis=1)   
         #print confdf            
         
-        result = pd.merge(result, confdf, on=["dc_type", "gof_mode", "var", "test", "channel"])
+        result = pd.merge(result, confdf, on=merge_on)
         
     #printWithStyle(result)
     #applyStyle(result)

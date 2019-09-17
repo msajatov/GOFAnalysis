@@ -147,13 +147,22 @@ def makePdf(channel):
     
     base = "cc"
     if "all" in channel:
-        configs = ["cc1", "nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10", "nn11", 
-               "nn13", "nn15", "nn16", "nn17", "nn18", "nn21"]
+        configs = ["cc1", "cc2", "nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10", "nn11", 
+               "nn13", "nn14", "nn15", "nn16", "nn17", "nn18", "nn21"]
         channels = ["et", "mt", "tt"]
     else:
 #         configs = ["cc1", "nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10", "nn11", "nn13", "nn15", 
 #                  "nn16", "nn17", "nn18", "nn19", "nn20", "nn15a", "nn16a", "nn17a", "nn18a"]
-        configs = ["cc1", "nn5", "nn10", "nn13", "nn15", "nn15a", "nn16", "nn16a", "nn17", "nn17a", "nn18", "nn18a", "nn19", "nn20"]
+#         configs = ["cc1", "nn5", "nn10", "nn13", "nn15", "nn15a", "nn15a2", "nn16", "nn16a", "nn16a2", "nn17", "nn17a", "nn17a2", 
+#                    "nn18", "nn18a", "nn18a2", "nn19", "nn20"]
+#         configs = ["cc1", "nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10", "nn11", 
+#                "nn13", "nn13a2", "nn14", "nn14a2", "nn15a2", "nn16a2", "nn17a2", "nn18a2"]
+#         configs = ["cc1", "cc2", "nn13", "nn13a2", "nn14", "nn14a2", "nn15", "nn15a", "nn15a2", "nn16", "nn16a", "nn16a2", 
+#                    "nn17", "nn17a", "nn17a2", "nn18", "nn18a", "nn18a2",
+#                    "nn1a2", "nn2a2", "nn3a2", "nn4a2", "nn5a2", "nn6a2", "nn7a2", "nn8a2", "nn9a2", "nn10a2", "nn11a2", "nn12a2"]
+#         configs = ["cc1", "cc2", "nn1a2", "nn2a2", "nn3a2", "nn4a2", "nn5a2", "nn6a2", "nn7a2", "nn8a2", "nn9a2", "nn10a2", 
+#                    "nn11a2", "nn12a2", "nn13a2", "nn14a2", "nn15a2", "nn16a2", "nn17a2", "nn18a2"]
+        configs = ["cc1", "cc2", "nn11", "nn11a2", "nn11e", "nn12a2", "nn12e", "nn14a2", "nn14e", "nn16", "nn16a2", "nn16e", "nn18", "nn18a2", "nn18e"]
         channels = ["tt"]
     
     cols = [base] + configs
@@ -162,6 +171,8 @@ def makePdf(channel):
         html = ""
         
         result = evalgof.compareSideBySide(df, "cc", configs, "saturated", ch)
+        result = result.rename(columns = {"channel":"ch"})
+        result.drop(["dc_type", "gof_mode"], axis=1, inplace=True)
         styler = result.style.applymap(color_negative_red) \
                     .apply(highlight_greater_than_base, subset=cols, axis=1) \
                     .apply(highlight_max, subset=cols, axis=1)
@@ -169,6 +180,8 @@ def makePdf(channel):
         html = html + styler.render()
         
         result = evalgof.compareSideBySide(df, "cc", configs, "KS", ch)
+        result = result.rename(columns = {"channel":"ch"})
+        result.drop(["dc_type", "gof_mode"], axis=1, inplace=True)
         styler = result.style.applymap(color_negative_red) \
                     .apply(highlight_greater_than_base, subset=cols, axis=1) \
                     .apply(highlight_max, subset=cols, axis=1)
@@ -177,6 +190,8 @@ def makePdf(channel):
         html = html + styler.render()
         
         result = evalgof.compareSideBySide(df, "cc", configs, "AD", ch)
+        result = result.rename(columns = {"channel":"ch"})
+        result.drop(["dc_type", "gof_mode"], axis=1, inplace=True)
         styler = result.style.applymap(color_negative_red) \
                     .apply(highlight_greater_than_base, subset=cols, axis=1) \
                     .apply(highlight_max, subset=cols, axis=1)
