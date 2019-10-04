@@ -76,7 +76,9 @@ def compareFailingVars(df, channel, modes=[]):
     
     failingVarComp = FailingVariableComparer(dc_types, gof_modes, confs, variables, tests, channels)
     failingVarComp.set_threshold(0.05)
-    failingVarComp.printFailingVariables(df, ["conf", "channelconf", "testchannelconf", "channelconfshort"])
+    f = failingVarComp.printFailingVariables(df, ["conf", "channelconf", "testchannelconf", "channelconfshort"])
+    
+    return f
      
 #     baseconf = "cc"
 #     configs = ["cc1", "nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10"]
@@ -105,6 +107,12 @@ def main():
     print "Sorry, not implemented. Use this as part of a module and call the functions."
 
 
+def saveCsv(df, filename):
+    csv = df.to_csv(index=False, sep=";")
+    file = open(filename, "w+")
+    file.write(csv)
+    file.close()
+
 def compareSideBySide(df, baseconf, configs, test="saturated", channel="et", merge_on=["dc_type", "gof_mode", "var", "test", "channel"]):  
     subset = df.query("test == '{0}'".format(test)) \
                         .query("channel == '{0}'".format(channel))  
@@ -131,7 +139,7 @@ def compareSideBySide(df, baseconf, configs, test="saturated", channel="et", mer
         result = pd.merge(result, confdf, on=merge_on)
         
     return result
- 
+                      
             
 class FailingVariableComparer():
     def __init__(self, dc_types, gof_modes, confs, variables, tests, channels):
@@ -149,7 +157,8 @@ class FailingVariableComparer():
     def getFailingVariables(self, df):
         failing = df.query("pvalue <= {0}".format(self.threshold))
         return failing
-        
+            
+    
     def printFailingVariables(self, df, modes=[]):
         failing = self.getFailingVariables(df)
                 
@@ -157,7 +166,7 @@ class FailingVariableComparer():
             self.printByConf(failing)
             self.printByTestConf(failing)
             self.printByChannelConf(failing)
-            self.printByTestChannelConf(failing)
+            f = self.printByTestChannelConf(failing)
         else:
             if "conf" in modes:
                 self.printByConf(failing)
@@ -166,10 +175,13 @@ class FailingVariableComparer():
             if "channelconf" in modes:
                 self.printByChannelConf(failing)
             if "testchannelconf" in modes:
-                self.printByTestChannelConf(failing, False)
+                f = self.printByTestChannelConf(failing, False)
                 self.printByTestChannelConf(failing, True)
             if "channelconfshort" in modes:
                 self.printByChannelConf(failing, True)
+                
+        print f
+        return f
             
             
     def compareAgainstBase(self, df, baseconf, configs):
@@ -177,27 +189,36 @@ class FailingVariableComparer():
             self.printFailingVariablesDifferentially(df, baseconf, conf)                
     
     def printByConf(self, failing):
+        fail = {}
         for conf in self.confs:
             f = failing.query("conf == '{0}'".format(conf))
             vars = list(set(f["var"]))
             print "failing for {0}: {1}    {2}".format(conf, len(f), vars)
+            fail[conf] = len(f)
     
     def printByTestConf(self, failing):
+        fail = {}
         for test in self.tests:
+            fail[test] = {}
             for conf in self.confs:
                 f = failing.query("conf == '{0}'".format(conf)) \
                             .query("test == '{0}'".format(test))
                 vars = list(set(f["var"]))
                 print "failing for {0} {1}: {2}    {3}".format(test, conf, len(f), vars)#
+                fail[test][conf] = len(f)
             print ""
+        
     
     def printByChannelConf(self, failing, short=False):
+        fail = {}
         for channel in self.channels:
+            fail[channel] = {}
             for conf in self.confs:
                 f = failing.query("conf == '{0}'".format(conf)) \
                             .query("channel == '{0}'".format(channel))
                 vars = list(set(f["var"]))
                 print "failing for {0} {1}: {2}    {3}".format(channel, conf, len(f), vars)
+                fail[channel][conf] = len(f)
             print ""
             
         if short:
@@ -210,14 +231,18 @@ class FailingVariableComparer():
                 print ""
     
     def printByTestChannelConf(self, failing, short=False):
+        fail = {}
         for test in self.tests:
+            fail[test] = {}
             for channel in self.channels:
+                fail[test][channel] = {}
                 for conf in self.confs:
                     f = failing.query("conf == '{0}'".format(conf)) \
                                 .query("test == '{0}'".format(test)) \
                                 .query("channel == '{0}'".format(channel))
                     vars = list(set(f["var"]))
                     print "failing for {0} {1} {2}: {3}    {4}".format(test, channel, conf, len(f), vars)
+                    fail[test][channel][conf] = len(f)
                 print ""
             print ""
             
@@ -233,6 +258,8 @@ class FailingVariableComparer():
                         print "{3}".format(test, channel, conf, len(f), vars)
                     print ""
                 print ""
+                
+        return fail
     
     def printFailingVariablesDifferentially(self, df, baseconf, conf, verbose=True):        
         failing = self.getFailingVariables(df)

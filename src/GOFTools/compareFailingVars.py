@@ -16,7 +16,7 @@ def main():
     print args.channel
     df = loadDF("../output/{0}_pvalues.json".format(args.channel))
 
-    evalgof.compareFailingVars(df, args.channel)
+    f = evalgof.compareFailingVars(df, args.channel)
     
 def loadDF(relpath):
     
@@ -63,6 +63,12 @@ def loadDF(relpath):
     df = pd.DataFrame(rows_list, columns=["dc_type", "gof_mode", "conf", "var", "test", "channel", "pvalue"])     
     df = df[~df['var'].isin(ignorevars)]
     return df
+    
+def saveCsv(df, filename):
+    csv = df.to_csv(index=False, sep=";")
+    file = open(filename, "w+")
+    file.write(csv)
+    file.close()
     
 def load(path):
     try:
