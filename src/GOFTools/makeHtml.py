@@ -18,6 +18,13 @@ def color_negative_red(val):
     color = 'red' if val <= 0.05 else 'black'
     return 'color: %s' % color
 
+def highlight_sum(val):
+    '''
+    highlight the maximum in a Series green.
+    '''
+    fw = 'bold' if val != '-' else 'normal'
+    return 'font-weight: %s' % fw
+
 def highlight_max(s):
     '''
     highlight the maximum in a Series green.
@@ -53,6 +60,7 @@ def main():
     parser.add_argument('-c', dest='channel', help='Decay channel', choices = ['mt', 'et', 'tt', 'all'], default='all')
 #     parser.add_argument('-m', dest='mode', help='Config to compare', default='')
     parser.add_argument('mode', nargs="*", help='Variable', default=[])
+    parser.add_argument('-f', dest="failing", help='Variable', action="store_true")
     args = parser.parse_args()
     
     
@@ -64,10 +72,10 @@ def main():
     else:
         modes = args.mode
 
-    makeHtml(args.channel, modes)
+    makeHtml(args.channel, modes, args.failing)
     
     
-def makeHtml(channel, modes):
+def makeHtml(channel, modes, add_failing):
     df = evalgof.loadDF("../output/{0}_pvalues.json".format(channel))
     
     print df
@@ -116,7 +124,10 @@ def makeHtml(channel, modes):
         for ch in channels:    
             html = ""
             for test in ["saturated", "KS", "AD"]:
-                res = makeSingleHtml(df, ch, test, configs, cols, name)                        
+                if add_failing:
+                    res = makeSingleHtml(df, ch, test, configs, cols, name, evalgof.compareFailingVars(df, channel))    
+                else:
+                    res = makeSingleHtml(df, ch, test, configs, cols, name, None)                                         
                 html = html + res
             
 #             file = open('{0}_{1}.html'.format(ch, name), "w+")
@@ -141,7 +152,10 @@ def makeHtml(channel, modes):
         for ch in channels:    
             html = ""
             for test in ["saturated", "KS", "AD"]:
-                res = makeSingleHtml(df, ch, test, configs, cols, name)                        
+                if add_failing:
+                    res = makeSingleHtml(df, ch, test, configs, cols, name, evalgof.compareFailingVars(df, channel))    
+                else:
+                    res = makeSingleHtml(df, ch, test, configs, cols, name, None)                   
                 html = html + res
             
 #             file = open('{0}_{1}.html'.format(ch, name), "w+")
@@ -151,18 +165,55 @@ def makeHtml(channel, modes):
 #             
 #             pdf.from_string(res, '{0}_{1}.pdf'.format(ch, name))
             
-def makeSingleHtml(df, ch, test, configs, cols, name):
+def makeSingleHtml(df, ch, test, configs, cols, name, failing):
     html = ""
             
-    result = evalgof.compareSideBySide(df, "cc", configs, "saturated", ch)
+    result = evalgof.compareSideBySide(df, "cc", configs, test, ch)
     result = result.rename(columns = {"channel":"ch"})
     result.drop(["dc_type", "gof_mode"], axis=1, inplace=True)
+#     styler = result.style.applymap(color_negative_red) \
+#                 .apply(highlight_greater_than_base, subset=cols, axis=1) \
+#                 .apply(highlight_smaller_than_base, subset=cols, axis=1) \
+#                 .apply(highlight_max, subset=cols, axis=1) \
+#                 .apply(highlight_sum, subset=['18'], axis=0)
+#                 
+#     html = html + styler.render()
+    
+    if failing:
+        f = failing[test][ch]
+        print "failing:"
+        print f
+        
+        new_row = {'var':"-", 'test':test, 'ch':ch}
+        for conf in cols:
+            new_row[conf] = int(f[conf])
+            
+        sum_df = pd.DataFrame([new_row], columns=["var", "test", "ch"] + cols)  
+        print sum_df   
+        
+    result = pd.concat([result, sum_df])
+    
+    new_index = range(len(result))
+    print new_index
+    result.index = new_index
+#     result.reset_index(inplace=True)
+    
+    print result
+        
+    #sum_styler = sum_df.style.hide_index()
+    
+    #html = html + sum_styler.render()
+    
     styler = result.style.applymap(color_negative_red) \
                 .apply(highlight_greater_than_base, subset=cols, axis=1) \
                 .apply(highlight_smaller_than_base, subset=cols, axis=1) \
-                .apply(highlight_max, subset=cols, axis=1)
+                .apply(highlight_max, subset=cols, axis=1) 
+#                 .apply(highlight_sum, subset=pd.IndexSlice[18:18, cols])
                 
     html = html + styler.render()
+    
+    
+    
     
     file = open('{0}_{1}_{2}.html'.format(ch, test, name), "w+")
     file.write(html)
