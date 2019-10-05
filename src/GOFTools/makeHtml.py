@@ -29,7 +29,10 @@ def highlight_max(s):
     '''
     highlight the maximum in a Series green.
     '''
-    is_max = s == s.max()
+# is_max is an array!
+#     is_max = (s == s.max() and s.apply(lambda x: x > 0))
+    is_max = (s == s.max())
+    
     return ['background-color: rgba(171, 243, 108, 142)' if v else '' for v in is_max]
 
 # def highlight_greater_than_base(s):
@@ -184,9 +187,9 @@ def makeSingleHtml(df, ch, test, configs, cols, name, failing):
         print "failing:"
         print f
         
-        new_row = {'var':"-", 'test':test, 'ch':ch}
+        new_row = {'var':"total failing", 'test':test, 'ch':ch}
         for conf in cols:
-            new_row[conf] = int(f[conf])
+            new_row[conf] = str(int(f[conf]))
             
         sum_df = pd.DataFrame([new_row], columns=["var", "test", "ch"] + cols)  
         print sum_df   
