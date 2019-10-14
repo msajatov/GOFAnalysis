@@ -57,6 +57,24 @@ def highlight_smaller_than_base(row):
     return ret
 
 
+class Cell:
+    def __init__(self, text):
+        self.text = text
+        self.font = "default"
+        self.color = "black"
+        self.backgroundcolor = "none"
+        
+class Row:
+    def __init__(self):
+        self.confs = []
+        self.var = []
+        
+class Grid:
+    def __init__(self):
+        self.header = None
+        self.rows = []
+        self.failing = None
+
 def main():
     
     parser = argparse.ArgumentParser()
@@ -106,7 +124,8 @@ def generate(channels, modes, add_failing):
             else:
                 df = shape(mtet_df, ch, test, configs, cols)
                 
-            toLatex(df)
+            toGrid(df)
+#             toLatex(df)
             
 
 def shape(in_df, ch, test, configs, cols):
@@ -130,10 +149,53 @@ def shape(in_df, ch, test, configs, cols):
     print renamed
     return renamed
 
-def toLatex(df):
-    csv = df.to_csv(index=False, sep="&")
+def toGrid(df):
     
-    print csv
+    header_df = df.columns
+    header = toRow(map(lambda x: Cell(x), header_df.values))    
+        
+    rows = []
+    for i in range(0,len(df)-2):        
+        r_df = df.iloc[i]
+        row = toRow(map(lambda x: Cell(x), r_df.values))
+        rows.append(row)
+    
+    failing_df = df.iloc[len(df)-1]
+    failing = toRow(map(lambda x: Cell(x), failing_df.values))   
+    
+    grid = Grid()
+    grid.header = header
+    grid.rows = rows
+    grid.failing = failing
+    
+    print grid
+    
+    print grid.header.var.text
+    
+    print grid.header.confs[2].text
+#     
+#     new = df.applymap(lambda x: Cell(x))
+#     print new
+#     
+#     df.applymap(lambda x: Cell(x.text + "__"))
+
+def toRow(cells):
+    row = Row()
+    row.var = cells[0]
+    row.confs = cells[1:len(cells)-1]
+    return row
+
+def applyConditionalFormating(df):
+    pass
+
+def toLatex(df):
+    csv = df.to_csv(index=False, sep="&")    
+    
+    lines = csv.split("\n")    
+    print lines
+    
+    for line in lines:
+        line += "\\"
 
 def renameCC(df):
     result = df.rename(columns = {"cc":"cc1", "cc1":"cc2", "cc2":"cc3"})
