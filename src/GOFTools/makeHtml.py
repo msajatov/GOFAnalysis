@@ -63,6 +63,7 @@ class Cell:
         self.font = ""
         self.color = ""
         self.backgroundcolor = ""
+        self.cleanUpFloatFormating()
         
     def toLatex(self):
         output = str(self.text)
@@ -76,6 +77,18 @@ class Cell:
         
             
         return output
+    
+    def cleanUpFloatFormating(self):
+        if not "." in str(self.text):
+            return
+        try:
+            floatvalue = float(self.text)
+            rounded = round(floatvalue, 3)
+            print rounded
+            self.text = "{:1.3f}".format(rounded)
+        except ValueError:
+            print "not a float"
+            print self.text
         
 class Row:
     def __init__(self):
@@ -229,8 +242,8 @@ def toRow(cells):
     return row
 
 def applyConditionalFormating(grid):
-    badcolor = "red!7"
-    goodcolor = "green!15"
+    badcolor = "amaranth!10"
+    goodcolor = "darkpastelgreen!10"
     failingcolor = "red"
         
     for row in grid.rows:
@@ -246,7 +259,12 @@ def applyConditionalFormating(grid):
     for row in grid.rows:
         for conf in row.confs:
             if float(conf.text) <= 0.05:
-                conf.color = failingcolor                
+                conf.color = failingcolor         
+                
+    grid.failing.var.font = "bold"
+                
+    for conf in grid.failing.confs:
+        conf.font = "bold"
     
 
 def toLatex(df):
