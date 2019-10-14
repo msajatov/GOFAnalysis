@@ -153,6 +153,7 @@ def generate(channels, modes, add_failing):
             else:
                 df = shape(mtet_df, ch, test, configs, cols)
                 
+            print df
             toGrid(df)
 #             toLatex(df)
             
@@ -182,9 +183,10 @@ def toGrid(df):
     
     header_df = df.columns
     header = toRow(map(lambda x: Cell(x), header_df.values))    
+    print header.confs
         
     rows = []
-    for i in range(0,len(df)-2):        
+    for i in range(0,len(df)-1):        
         r_df = df.iloc[i]
         row = toRow(map(lambda x: Cell(x), r_df.values))
         rows.append(row)
@@ -217,9 +219,13 @@ def toGrid(df):
     print grid.toLatex()
 
 def toRow(cells):
+    print "cells"
+    print cells
     row = Row()
     row.var = cells[0]
-    row.confs = cells[1:len(cells)-1]
+    row.confs = cells[1:len(cells)]
+    print "row.confs"
+    print row.confs
     return row
 
 def applyConditionalFormating(grid):
@@ -228,7 +234,7 @@ def applyConditionalFormating(grid):
     failingcolor = "red"
         
     for row in grid.rows:
-        for conf in row.confs[3:len(row.confs)-1]:
+        for conf in row.confs[3:len(row.confs)]:
             cc1 = float(row.confs[0].text)
             cc2 = float(row.confs[1].text)
             cc3 = float(row.confs[2].text)
