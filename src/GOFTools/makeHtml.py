@@ -203,21 +203,18 @@ def toGrid(df):
     
     print grid.header.confs[2].text
     
-    grid.header.confs[2].color = "red"
-    grid.header.confs[0].backgroundcolor = "red!7"
-    
-    grid.rows[4].confs[0].backgroundcolor = "red!7"
-    grid.rows[4].confs[0].color = "red"
-    
-    grid.rows[6].confs[0].font = "bold"
-    grid.rows[6].confs[0].backgroundcolor = "green!15"
+#     grid.header.confs[2].color = "red"
+#     grid.header.confs[0].backgroundcolor = "red!7"
+#     
+#     grid.rows[4].confs[0].backgroundcolor = "red!7"
+#     grid.rows[4].confs[0].color = "red"
+#     
+#     grid.rows[6].confs[0].font = "bold"
+#     grid.rows[6].confs[0].backgroundcolor = "green!15"
+
+    applyConditionalFormating(grid)
     
     print grid.toLatex()
-#     
-#     new = df.applymap(lambda x: Cell(x))
-#     print new
-#     
-#     df.applymap(lambda x: Cell(x.text + "__"))
 
 def toRow(cells):
     row = Row()
@@ -225,8 +222,26 @@ def toRow(cells):
     row.confs = cells[1:len(cells)-1]
     return row
 
-def applyConditionalFormating(df):
-    pass
+def applyConditionalFormating(grid):
+    badcolor = "red!7"
+    goodcolor = "green!15"
+    failingcolor = "red"
+        
+    for row in grid.rows:
+        for conf in row.confs[3:len(row.confs)-1]:
+            cc1 = float(row.confs[0].text)
+            cc2 = float(row.confs[1].text)
+            cc3 = float(row.confs[2].text)
+            if float(conf.text) > cc1 and float(conf.text) > cc2 and float(conf.text) > cc3:
+                conf.backgroundcolor = goodcolor
+            if float(conf.text) < cc1 and float(conf.text) < cc2 and float(conf.text) < cc3:
+                conf.backgroundcolor = badcolor
+                
+    for row in grid.rows:
+        for conf in row.confs:
+            if float(conf.text) <= 0.05:
+                conf.color = failingcolor                
+    
 
 def toLatex(df):
     csv = df.to_csv(index=False, sep="&")    
