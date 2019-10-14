@@ -69,14 +69,82 @@ def main():
     
     
     if not args.mode:
-        modes = ["pt_1","pt_2","jpt_1","jpt_2","bpt_1","bpt_2","njets","nbtag","m_sv","mt_1",
+        variables = ["pt_1","pt_2","jpt_1","jpt_2","bpt_1","bpt_2","njets","nbtag","m_sv","mt_1",
                     "mt_2","pt_vis","pt_tt","mjj","jdeta","m_vis","dijetpt","met","eta_1","eta_2"]
-#         variables = ["pt_1","pt_2"]
+        modes = ["nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10", "nn11", "nn12",
+                   "nn13", "nn14", "nn15", "nn16", "nn17", "nn18"]
     else:
         modes = args.mode
 
-    makeHtml(args.channel, modes, args.failing)
+#     makeHtml(args.channel, modes, args.failing)
     
+    if "all" in args.channel:
+        channels = ["et", "mt", "tt"]
+    else:                     
+        channels = ["tt"]
+        
+    generate(channels, modes, args.failing)
+    
+def generate(channels, modes, add_failing):
+    
+    mtet_df = evalgof.loadDF("../output/all_pvalues.json")
+    tt_df = evalgof.loadDF("../output/tt_pvalues.json")
+        
+    base = "cc"
+    name = "custom"
+    
+    configs = ["cc1", "cc2"] + modes
+    
+    cols = [base] + configs
+    
+    tests = ["saturated"]
+    
+    for ch in channels:    
+        for test in tests:
+            if "tt" in ch:
+                df = shape(tt_df, ch, test, configs, cols)
+            else:
+                df = shape(mtet_df, ch, test, configs, cols)
+                
+            toLatex(df)
+            
+
+def shape(in_df, ch, test, configs, cols):
+    df = getReducedDataframe(in_df, ch, test, configs, cols)
+        
+    series = df.apply(lambda x: x <= 0.05).sum(numeric_only=True)
+    print series
+    series = series.astype(int)
+    print series
+    new = df.append(series, ignore_index=True)
+    print new
+    
+    length = len(new)
+    new.iloc[length - 1] = new.iloc[length - 1].map('{:,.0f}'.format)
+    
+    new["variable"][length - 1] = "failing"
+    
+    print new
+    
+    renamed = renameCC(new)
+    print renamed
+    return renamed
+
+def toLatex(df):
+    csv = df.to_csv(index=False, sep="&")
+    
+    print csv
+
+def renameCC(df):
+    result = df.rename(columns = {"cc":"cc1", "cc1":"cc2", "cc2":"cc3"})
+    return result
+
+def getReducedDataframe(df, ch, test, configs, cols):
+    result = evalgof.compareSideBySide(df, "cc", configs, test, ch)
+    result = result.rename(columns = {"var":"variable"})
+    result.drop(["dc_type", "gof_mode", "test", "channel"], axis=1, inplace=True)
+    
+    return result
     
 def makeHtml(channel, modes, add_failing):
     df = evalgof.loadDF("../output/{0}_pvalues.json".format(channel))
@@ -88,7 +156,7 @@ def makeHtml(channel, modes, add_failing):
         name = "default"
         if "all" in channel:
             configs = ["cc1", "cc2", "nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10", "nn11", "nn12",
-                   "nn13", "nn14", "nn15", "nn16", "nn17", "nn18", "nn21"]
+                   "nn13", "nn14", "nn15", "nn16", "nn17", "nn18"]
             channels = ["et", "mt", "tt"]
         else:
     #         configs = ["cc1", "nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10", "nn11", "nn13", "nn15", 
@@ -105,16 +173,16 @@ def makeHtml(channel, modes, add_failing):
     #         configs = ["cc1", "cc2", "nn11", "nn11a2", "nn11e", "nn12a2", "nn12e", "nn14a2", "nn14e", "nn16", "nn16a2", "nn16e", "nn18", "nn18a2", "nn18e"]
             
     #         vanilla
-            configs = ["cc1", "cc2", "nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10", "nn11", "nn12",
-                       "nn13", "nn14", "nn15", "nn16", "nn17", "nn18", "nn19", "nn20"]
+#             configs = ["cc1", "cc2", "nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10", "nn11", "nn12",
+#                        "nn13", "nn14", "nn15", "nn16", "nn17", "nn18", "nn19", "nn20"]
             
     #         aiso2
     #         configs = ["cc1", "cc2", "nn1a2", "nn2a2", "nn3a2", "nn4a2", "nn5a2", "nn6a2", "nn7a2", "nn8a2", "nn9a2", "nn10a2", 
     #                     "nn11a2", "nn12a2","nn13a2", "nn14a2", "nn15a2", "nn16a2", "nn17a2", "nn18a2"]
     
     #         aiso
-    #         configs = ["cc1", "cc2", "nn1a", "nn2a", "nn3a", "nn4a", "nn5a", "nn6a", "nn7a", "nn8a", "nn9a", "nn10a", 
-    #                     "nn11a", "nn12a","nn13a", "nn14a", "nn15a", "nn16a", "nn17a", "nn18a"]
+            configs = ["cc1", "cc2", "nn1a", "nn2a", "nn3a", "nn4a", "nn5a", "nn6a", "nn7a", "nn8a", "nn9a", "nn10a", 
+                        "nn11a", "nn12a","nn13a", "nn14a", "nn15a", "nn16a", "nn17a", "nn18a"]
             
     #         emb
     #         configs = ["cc1", "cc2", "nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10", "nn11e", "nn12e",
