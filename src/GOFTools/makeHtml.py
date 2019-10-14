@@ -67,10 +67,13 @@ class Cell:
     def toLatex(self):
         output = str(self.text)
         output = output.replace("_", "\_")
+        if self.font == "bold":
+            output = "\\textbf{" + output + "}"
         if self.backgroundcolor:            
             output = "\cellcolor{" + self.backgroundcolor + "}" + output
         if self.color:
             output = "\leavevmode\color{" + self.color + "}" + output
+        
             
         return output
         
@@ -93,9 +96,11 @@ class Grid:
         self.failing = None
         
     def toLatex(self):
-        output = self.header.toLatex()        
+        output = self.header.toLatex()  
+        output = output + "\midrule"      
         for row in self.rows:
             output += " \n " + row.toLatex()
+        output = output + "\midrule"      
         output += " \n " + self.failing.toLatex() + " \n "
         return output
 
@@ -203,6 +208,9 @@ def toGrid(df):
     
     grid.rows[4].confs[0].backgroundcolor = "red!7"
     grid.rows[4].confs[0].color = "red"
+    
+    grid.rows[6].confs[0].font = "bold"
+    grid.rows[6].confs[0].backgroundcolor = "green!15"
     
     print grid.toLatex()
 #     
