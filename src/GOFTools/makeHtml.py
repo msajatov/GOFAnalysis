@@ -84,11 +84,12 @@ class Cell:
         try:
             floatvalue = float(self.text)
             rounded = round(floatvalue, 3)
-            print rounded
+#             print rounded
             self.text = "{:1.3f}".format(rounded)
         except ValueError:
-            print "not a float"
-            print self.text
+            pass
+#             print "not a float"
+#             print self.text
         
 class Row:
     def __init__(self):
@@ -166,7 +167,7 @@ def generate(channels, modes, add_failing):
             else:
                 df = shape(mtet_df, ch, test, configs, cols)
                 
-            print df
+#             print df
             toGrid(df)
 #             toLatex(df)
             
@@ -175,18 +176,18 @@ def shape(in_df, ch, test, configs, cols):
     df = getReducedDataframe(in_df, ch, test, configs, cols)
         
     series = df.apply(lambda x: x <= 0.05).sum(numeric_only=True)
-    print series
+#     print series
     series = series.astype(int)
-    print series
+#     print series
     new = df.append(series, ignore_index=True)
-    print new
+#     print new
     
     length = len(new)
     new.iloc[length - 1] = new.iloc[length - 1].map('{:,.0f}'.format)
     
     new["variable"][length - 1] = "failing"
     
-    print new
+#     print new
     
     renamed = renameCC(new)
     print renamed
@@ -196,7 +197,7 @@ def toGrid(df):
     
     header_df = df.columns
     header = toRow(map(lambda x: Cell(x), header_df.values))    
-    print header.confs
+#     print header.confs
         
     rows = []
     for i in range(0,len(df)-1):        
@@ -212,11 +213,11 @@ def toGrid(df):
     grid.rows = rows
     grid.failing = failing
     
-    print grid
+#     print grid
     
-    print grid.header.var.text
+#     print grid.header.var.text
     
-    print grid.header.confs[2].text
+#     print grid.header.confs[2].text
     
 #     grid.header.confs[2].color = "red"
 #     grid.header.confs[0].backgroundcolor = "red!7"
@@ -232,13 +233,13 @@ def toGrid(df):
     print grid.toLatex()
 
 def toRow(cells):
-    print "cells"
-    print cells
+#     print "cells"
+#     print cells
     row = Row()
     row.var = cells[0]
     row.confs = cells[1:len(cells)]
-    print "row.confs"
-    print row.confs
+#     print "row.confs"
+#     print row.confs
     return row
 
 def applyConditionalFormating(grid):
@@ -259,7 +260,7 @@ def applyConditionalFormating(grid):
     for row in grid.rows:
         for conf in row.confs:
             if float(conf.text) <= 0.05:
-                conf.color = failingcolor         
+                conf.font = "bold"         
                 
     grid.failing.var.font = "bold"
                 
@@ -271,7 +272,7 @@ def toLatex(df):
     csv = df.to_csv(index=False, sep="&")    
     
     lines = csv.split("\n")    
-    print lines
+#     print lines
     
     for line in lines:
         line += "\\"
