@@ -64,16 +64,33 @@ class Cell:
         self.color = "black"
         self.backgroundcolor = "none"
         
+    def toLatex(self):
+        return str(self.text)
+        
 class Row:
     def __init__(self):
         self.confs = []
         self.var = []
+        
+    def toLatex(self):
+        output = self.var.toLatex()
+        for conf in self.confs:
+            output += " & " + conf.toLatex()            
+        output = output + " \\\\"
+        return output
         
 class Grid:
     def __init__(self):
         self.header = None
         self.rows = []
         self.failing = None
+        
+    def toLatex(self):
+        output = self.header.toLatex()        
+        for row in self.rows:
+            output += " \n " + row.toLatex()
+        output += " \n " + self.failing.toLatex() + " \n "
+        return output
 
 def main():
     
@@ -173,6 +190,8 @@ def toGrid(df):
     print grid.header.var.text
     
     print grid.header.confs[2].text
+    
+    print grid.toLatex()
 #     
 #     new = df.applymap(lambda x: Cell(x))
 #     print new
