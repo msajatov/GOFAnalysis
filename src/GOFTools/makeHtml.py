@@ -60,12 +60,19 @@ def highlight_smaller_than_base(row):
 class Cell:
     def __init__(self, text):
         self.text = text
-        self.font = "default"
-        self.color = "black"
-        self.backgroundcolor = "none"
+        self.font = ""
+        self.color = ""
+        self.backgroundcolor = ""
         
     def toLatex(self):
-        return str(self.text)
+        output = str(self.text)
+        output = output.replace("_", "\_")
+        if self.backgroundcolor:            
+            output = "\cellcolor{" + self.backgroundcolor + "}" + output
+        if self.color:
+            output = "\leavevmode\color{" + self.color + "}" + output
+            
+        return output
         
 class Row:
     def __init__(self):
@@ -190,6 +197,12 @@ def toGrid(df):
     print grid.header.var.text
     
     print grid.header.confs[2].text
+    
+    grid.header.confs[2].color = "red"
+    grid.header.confs[0].backgroundcolor = "red!7"
+    
+    grid.rows[4].confs[0].backgroundcolor = "red!7"
+    grid.rows[4].confs[0].color = "red"
     
     print grid.toLatex()
 #     
