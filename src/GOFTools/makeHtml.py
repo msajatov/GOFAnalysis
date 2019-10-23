@@ -71,9 +71,9 @@ class Cell:
         if self.font == "bold":
             output = "\\textbf{" + output + "}"
         if self.backgroundcolor:            
-            output = "\cellcolor{" + self.backgroundcolor + "}" + output
+            output = self.backgroundcolor + output
         if self.color:
-            output = "\leavevmode\color{" + self.color + "}" + output
+            output = self.color + output
         
             
         return output
@@ -158,7 +158,7 @@ def generate(channels, modes, add_failing):
     
     cols = [base] + configs
     
-    tests = ["saturated"]
+    tests = ["KS"]
     
     for ch in channels:    
         for test in tests:
@@ -253,14 +253,16 @@ def applyConditionalFormating(grid):
             cc2 = float(row.confs[1].text)
             cc3 = float(row.confs[2].text)
             if float(conf.text) > cc1 and float(conf.text) > cc2 and float(conf.text) > cc3:
-                conf.backgroundcolor = goodcolor
+                conf.backgroundcolor = "\\goodcolor"
             if float(conf.text) < cc1 and float(conf.text) < cc2 and float(conf.text) < cc3:
-                conf.backgroundcolor = badcolor
+                conf.backgroundcolor = "\\badcolor"
                 
     for row in grid.rows:
         for conf in row.confs:
             if float(conf.text) <= 0.05:
-                conf.color = failingcolor        
+                conf.color = "\\failingcolor"  
+            else:
+                conf.color="\\passingcolor"      
                 
     grid.failing.var.font = "bold"
                 
