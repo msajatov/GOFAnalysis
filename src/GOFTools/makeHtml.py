@@ -243,8 +243,8 @@ def toRow(cells):
     return row
 
 def applyConditionalFormating(grid):
-    badcolor = "amaranth!10"
-    goodcolor = "darkpastelgreen!10"
+    badcolor = "radicalred!10"
+    goodcolor = "green-yellow!20"
     failingcolor = "red"
         
     for row in grid.rows:
@@ -260,7 +260,7 @@ def applyConditionalFormating(grid):
     for row in grid.rows:
         for conf in row.confs:
             if float(conf.text) <= 0.05:
-                conf.font = "bold"         
+                conf.color = failingcolor        
                 
     grid.failing.var.font = "bold"
                 
