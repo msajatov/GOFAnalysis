@@ -27,7 +27,8 @@ def highlight_sum(val):
 
 def highlight_max(s):
     '''
-    highlight the maximum in a Series green.
+    highlight the maximum in a Series green.nn22
+nn23
     '''
 # is_max is an array!
 #     is_max = (s == s.max() and s.apply(lambda x: x > 0))
@@ -105,17 +106,21 @@ class Row:
         
 class Grid:
     def __init__(self):
+        self.tableprefix = ""
+        self.tablepostfix = ""
         self.header = None
         self.rows = []
         self.failing = None
         
     def toLatex(self):
-        output = self.header.toLatex()  
+        output = self.tableprefix
+        output = output + self.header.toLatex()  
         output = output + "\midrule"      
         for row in self.rows:
             output += " \n " + row.toLatex()
         output = output + "\midrule"      
         output += " \n " + self.failing.toLatex() + " \n "
+        output = output + self.tablepostfix
         return output
 
 def main():
@@ -125,6 +130,7 @@ def main():
 #     parser.add_argument('-m', dest='mode', help='Config to compare', default='')
     parser.add_argument('mode', nargs="*", help='Variable', default=[])
     parser.add_argument('-f', dest="failing", help='Variable', action="store_true")
+    parser.add_argument('-d', dest="dropCC", help='Variable', action="store_true")
     args = parser.parse_args()
     
     
@@ -144,9 +150,9 @@ def main():
     else:                     
         channels = ["tt"]
         
-    generate(channels, modes, args.failing)
+    generate(channels, modes, args.failing, args.dropCC)
     
-def generate(channels, modes, add_failing):
+def generate(channels, modes, add_failing, dropCC=False):
     
     mtet_df = evalgof.loadDF("../output/all_pvalues.json")
     tt_df = evalgof.loadDF("../output/tt_pvalues.json")
@@ -163,16 +169,16 @@ def generate(channels, modes, add_failing):
     for ch in channels:    
         for test in tests:
             if "tt" in ch:
-                df = shape(tt_df, ch, test, configs, cols)
+                df = shape(tt_df, ch, test, configs, cols, dropCC)
             else:
-                df = shape(mtet_df, ch, test, configs, cols)
+                df = shape(mtet_df, ch, test, configs, cols, dropCC)
                 
 #             print df
             toGrid(df)
 #             toLatex(df)
             
 
-def shape(in_df, ch, test, configs, cols):
+def shape(in_df, ch, test, configs, cols, dropCC=False):
     df = getReducedDataframe(in_df, ch, test, configs, cols)
         
     series = df.apply(lambda x: x <= 0.05).sum(numeric_only=True)
@@ -188,16 +194,30 @@ def shape(in_df, ch, test, configs, cols):
     new["variable"][length - 1] = "failing"
     
 #     print new
-    
-    renamed = renameCC(new)
-    print renamed
-    return renamed
+    if not dropCC:
+        renamed = renameCC(new)
+        print renamed
+        return renamed
+    else:
+        new.drop(["cc", "cc1", "cc2"], axis=1, inplace=True)
+        return new
 
 def toGrid(df):
+    
+    
     
     header_df = df.columns
     header = toRow(map(lambda x: Cell(x), header_df.values))    
 #     print header.confs
+
+    spacing = 7.5
+    tableprefix = "\\begin{tabular}{p{18mm}"
+    for i in range(0, len(header.confs)):
+        tableprefix += "p{" + str(spacing) + "mm}"
+        
+    tableprefix += "}\n"
+    
+    tablepostfix = "\\end{tabular}"
         
     rows = []
     for i in range(0,len(df)-1):        
@@ -209,6 +229,8 @@ def toGrid(df):
     failing = toRow(map(lambda x: Cell(x), failing_df.values))   
     
     grid = Grid()
+    grid.tableprefix = tableprefix
+    grid.tablepostfix = tablepostfix
     grid.header = header
     grid.rows = rows
     grid.failing = failing

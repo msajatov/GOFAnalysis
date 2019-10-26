@@ -144,7 +144,9 @@ def main():
     else:                     
         channels = ["tt"]
         
-    generate(channels, modes, args.failing)
+#     generate(channels, modes, args.failing)
+    
+    makeHtml(args.channel, modes, args.failing)
     
 def generate(channels, modes, add_failing):
     
