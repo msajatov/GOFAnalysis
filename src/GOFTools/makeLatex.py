@@ -140,6 +140,8 @@ def main():
                     "mt_2","pt_vis","pt_tt","mjj","jdeta","m_vis","dijetpt","met","eta_1","eta_2"]
         modes = ["nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10", "nn11", "nn12",
                    "nn13", "nn14", "nn15", "nn16", "nn17", "nn18"]
+    elif "none" in args.mode:
+        modes = []
     else:
         modes = args.mode
 
@@ -164,7 +166,7 @@ def generate(channels, modes, add_failing, dropCC=False):
     
     cols = [base] + configs
     
-    tests = ["KS"]
+    tests = ["saturated", "KS", "AD"]
     
     for ch in channels:    
         for test in tests:
