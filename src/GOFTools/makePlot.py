@@ -69,8 +69,11 @@ def plotPVal(df, label, marker, color):
     
     print newer
     
-    newindex = ["cc", "cc1", "cc2", "nn1", "nn4", "nn23", "nn2", "nn3", "nn5", "nn6", "nn7", "nn8",
-            "nn9", "nn10", "nn11", "nn12", "nn13", "nn14", "nn15", "nn16", "nn17", "nn18", "nn22"] 
+#     newindex = ["cc", "cc1", "cc2", "nn1", "nn4", "nn23", "nn2", "nn3", "nn5", "nn6", "nn7", "nn8",
+#             "nn9", "nn10", "nn11", "nn12", "nn13", "nn14", "nn15", "nn16", "nn17", "nn18", "nn22"] 
+    
+    newindex = ["CC1", "CC2", "CC3", "B0a", "B1a", "B2a", "C2a", "C1a", "C6a", "D1a", "D3a", "D2a",
+            "D4a", "D5a", "D2b", "D4b", "D4c", "D4d", "D2c", "D2d", "D1c", "D1d", "D1b"] 
     
     newest = newer.reindex(newindex)
     
@@ -159,6 +162,42 @@ def main():
     plotAllTests("mt", "nbtag", mtet_df, configs)
     
 
+def renameAndReorder(df):
+    
+    df.loc[df["conf"] == "cc", ["conf"]] = "CC1"
+    df.loc[df["conf"] == "cc1", ["conf"]] = "CC2"
+    df.loc[df["conf"] == "cc2", ["conf"]] = "CC3"
+    
+    df.loc[df["conf"] == "nn1", ["conf"]] = "B0a"
+    df.loc[df["conf"] == "nn2", ["conf"]] = "C2a"
+    df.loc[df["conf"] == "nn3", ["conf"]] = "C1a"
+    df.loc[df["conf"] == "nn4", ["conf"]] = "B1a"
+    df.loc[df["conf"] == "nn5", ["conf"]] = "C6a"
+    
+    df.loc[df["conf"] == "nn6", ["conf"]] = "D1a"
+    df.loc[df["conf"] == "nn7", ["conf"]] = "D3a"
+    df.loc[df["conf"] == "nn8", ["conf"]] = "D2a"
+    df.loc[df["conf"] == "nn9", ["conf"]] = "D4a"
+    df.loc[df["conf"] == "nn10", ["conf"]] = "D5a"
+    
+    df.loc[df["conf"] == "nn11", ["conf"]] = "D2b"
+    df.loc[df["conf"] == "nn12", ["conf"]] = "D4b"
+    df.loc[df["conf"] == "nn13", ["conf"]] = "D4c"
+    df.loc[df["conf"] == "nn14", ["conf"]] = "D4d"
+    df.loc[df["conf"] == "nn15", ["conf"]] = "D2c"
+    
+    df.loc[df["conf"] == "nn16", ["conf"]] = "D2d"
+    df.loc[df["conf"] == "nn17", ["conf"]] = "D1c"
+    df.loc[df["conf"] == "nn18", ["conf"]] = "D1d"
+    df.loc[df["conf"] == "nn21", ["conf"]] = "A1c"
+    df.loc[df["conf"] == "nn22", ["conf"]] = "D1b"
+    df.loc[df["conf"] == "nn23", ["conf"]] = "B2a"
+    
+    print "renamed df"
+    print df
+    
+    return df
+
 def plotAllTests(channel, variable, df, configs):
     
 #     result = evalgof.compareSideBySide(df, "cc", configs, "KS", channel)
@@ -192,8 +231,10 @@ def plotAllTests(channel, variable, df, configs):
         .query("test == '{0}'".format(test)) \
         .query("channel == '{0}'".format(channel)) \
         .query("var == 'nbtag'")   
+        
+    renamed = renameAndReorder(newdf)
     
-    plotPVal(newdf, "saturated", "v", "black")
+    plotPVal(renamed, "saturated", "v", "black")
     
        
     test = "KS"
@@ -203,8 +244,10 @@ def plotAllTests(channel, variable, df, configs):
         .query("test == '{0}'".format(test)) \
         .query("channel == '{0}'".format(channel)) \
         .query("var == 'nbtag'")   
+        
+    renamed = renameAndReorder(newdf)
     
-    plotPVal(newdf, "KS", "v", "green")
+    plotPVal(renamed, "KS", "v", "green")
     
     
     test = "AD"
@@ -212,9 +255,11 @@ def plotAllTests(channel, variable, df, configs):
         .query("gof_mode == 'results_w_emb'") \
         .query("test == '{0}'".format(test)) \
         .query("channel == '{0}'".format(channel)) \
-        .query("var == 'nbtag'")   
+        .query("var == 'nbtag'") 
+        
+    renamed = renameAndReorder(newdf)  
     
-    plotPVal(newdf, "AD", "v", "dodgerblue")
+    plotPVal(renamed, "AD", "v", "dodgerblue")
     
     plt.xlabel("Configuration")
     plt.ylabel("P-value")
