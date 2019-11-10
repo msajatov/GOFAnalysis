@@ -52,6 +52,34 @@ def loadDF(relpath):
     return df
 
 
+def compareFailingVarsNew(df, channels, confs=[]):
+    dc_types = ["emb_dc"]
+    #gof_modes = ["results_w_emb", "results_wo_emb"]
+    gof_modes = ["results_w_emb"]
+    
+#     if "all" in channel:
+#         confs = ["cc", "cc1", "cc2", "nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10", "nn11", "nn12",
+#                  "nn13", "nn14", "nn15", "nn16", "nn17", "nn18", "nn21", "nn22", "nn23"]
+#         channels = ["et", "mt", "tt"]
+#     else:
+#         confs = ["cc", "cc1", "cc2", "nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10", 
+#                           "nn11", "nn12", "nn13", "nn14", "nn15", "nn16", "nn17", "nn18", "nn19", "nn20",                          
+#                           "nn1a2", "nn2a2", "nn3a2", "nn4a2", "nn5a2", "nn6a2", "nn7a2", "nn8a2", "nn9a2", "nn10a2", 
+#                           "nn11a2", "nn12a2", "nn13a2", "nn14a2", "nn15a2", "nn16a2", "nn17a2", "nn18a2",
+#                           "nn11e", "nn12e", "nn14e", "nn16e", "nn18e",
+#                           "nn1a", "nn2a", "nn3a", "nn4a", "nn5a", "nn6a", "nn7a", "nn8a", "nn9a", "nn10a",
+#                           "nn11a", "nn12a", "nn13a", "nn14a", "nn15a", "nn16a", "nn17a", "nn18a", "nn22a", "nn23a", "xx"]
+#         channels = ["tt"]
+    variables = []
+    tests = ["saturated", "KS", "AD"]
+    
+    
+    failingVarComp = FailingVariableComparer(dc_types, gof_modes, confs, variables, tests, channels)
+    failingVarComp.set_threshold(0.05)
+    f = failingVarComp.printFailingVariables(df, ["conf", "channelconf", "testchannelconf", "channelconfshort"])
+    
+    return f
+
 def compareFailingVars(df, channel, modes=[]):
     dc_types = ["emb_dc"]
     #gof_modes = ["results_w_emb", "results_wo_emb"]
@@ -112,6 +140,34 @@ def saveCsv(df, filename):
     file = open(filename, "w+")
     file.write(csv)
     file.close()
+
+def compareSideBySideNew(df, baseconf, configs, test="saturated", channel="et", merge_on=["dc_type", "gof_mode", "var", "test", "channel"]):  
+    subset = df.query("test == '{0}'".format(test)) \
+                        .query("channel == '{0}'".format(channel))  
+    
+    # only keep necessary columns (otherwise problems with merge)
+    subset = subset.loc[:, merge_on + ["pvalue"] + ["conf"]]    
+    print "subset:"
+    print subset                      
+        
+    subset = subset.sort_values(by=["var", "conf"])
+    basedf = subset.query("conf == '{0}'".format(baseconf))  
+    basedf = basedf.rename(columns = {"pvalue":baseconf})
+    basedf = basedf.drop("conf", axis=1)   
+    #print basedf
+    
+    result = basedf
+    
+    for conf in configs: 
+        confdf = subset.query("conf == '{0}'".format(conf))
+        confdf = confdf.rename(columns = {"pvalue":conf})
+        confdf = confdf.drop("conf", axis=1)   
+        #print confdf            
+        
+        result = pd.merge(result, confdf, on=merge_on)
+        
+    return result
+
 
 def compareSideBySide(df, baseconf, configs, test="saturated", channel="et", merge_on=["dc_type", "gof_mode", "var", "test", "channel"]):  
     subset = df.query("test == '{0}'".format(test)) \
