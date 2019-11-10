@@ -72,8 +72,8 @@ def plotPVal(df, label, marker, color):
 #     newindex = ["cc", "cc1", "cc2", "nn1", "nn4", "nn23", "nn2", "nn3", "nn5", "nn6", "nn7", "nn8",
 #             "nn9", "nn10", "nn11", "nn12", "nn13", "nn14", "nn15", "nn16", "nn17", "nn18", "nn22"] 
     
-    newindex = ["CC1", "CC2", "CC3", "B0a", "B1a", "B2a", "C2a", "C1a", "C6a", "D1a", "D3a", "D2a",
-            "D4a", "D5a", "D2b", "D4b", "D4c", "D4d", "D2c", "D2d", "D1c", "D1d", "D1b"] 
+    newindex = ["CC1", "CC2", "CC3", "B0a", "B1a", "B2a", "C1a", "C2a", "C6a", "D1a", "D2a", "D3a",
+            "D4a", "D5a", "D1b", "D2b", "D4b", "D1c", "D2c", "D4c", "D1d", "D2d", "D4d", "A1c"] 
     
     newest = newer.reindex(newindex)
     
@@ -138,7 +138,7 @@ def main():
         variables = ["pt_1","pt_2","jpt_1","jpt_2","bpt_1","bpt_2","njets","nbtag","m_sv","mt_1",
                     "mt_2","pt_vis","pt_tt","mjj","jdeta","m_vis","dijetpt","met","eta_1","eta_2"]
         modes = ["nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10", "nn11", "nn12",
-                   "nn13", "nn14", "nn15", "nn16", "nn17", "nn18"]
+                   "nn13", "nn14", "nn15", "nn16", "nn17", "nn18", "nn21"]
     else:
         modes = args.mode
 
