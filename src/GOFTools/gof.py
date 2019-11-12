@@ -3,11 +3,12 @@ import pandas as pd
 import pdfkit as pdf
 import numpy as np
 import argparse
+import os
 
 import evalgof as evalgof
 
 
-defaultConfigs = ["cc", "cc1", "cc2", "nn1", "nn6", "nn13", "nn21"]
+defaultConfigs = ["cc", "cc1", "cc2", "nn1", "nn6", "nn13", "nn21", "nn5", "nn10", "nn18"]
 
 
 def main():
@@ -66,10 +67,61 @@ def listFailing(args):
             f = evalgof.compareFailingVarsNew(df, [ch], configs)     
 
 def makeHtml(args):
-    pass
+    import gof_pdf    
+    
+    if args.channel == "all":
+        channels = ["et", "mt", "tt"]
+    else:
+        channels = [args.channel]
+    
+    if args.configs:            
+        configs = args.configs
+    else:
+        configs = defaultConfigs
+        
+    basepath = "/eos/user/m/msajatov/wormhole/thesis/tables/html_output"
+    name = "default"
+        
+    for ch in channels:
+        html = ""
+        df = evalgof.loadDF("output/{0}_pvalues.json".format(ch))
+        for test in ["saturated", "KS", "AD"]:
+            result = getCompact(df, ch, test, configs)
+            html = html + gof_pdf.createHtml(result, configs)    
+            html = html + "<br/>"    
+    
+        print "html: "
+        print html
+        gof_pdf.saveHtml(basepath, html, ch, "all", name)
 
 def makePdf(args):
-    pass
+    import gof_pdf    
+    
+    if args.channel == "all":
+        channels = ["et", "mt", "tt"]
+    else:
+        channels = [args.channel]
+    
+    if args.configs:            
+        configs = args.configs
+    else:
+        configs = defaultConfigs
+        
+        
+    basepath = "/eos/user/m/msajatov/wormhole/thesis/tables/pdf_output"
+    name = "default"
+        
+    for ch in channels:
+        html = ""
+        df = evalgof.loadDF("output/{0}_pvalues.json".format(ch))
+        for test in ["saturated", "KS", "AD"]:
+            result = getCompact(df, ch, test, configs)
+            html = html + gof_pdf.createHtml(result, configs)    
+            html = html + "<br/>"    
+    
+        print "html: "
+        print html
+        gof_pdf.savePdf(basepath, html, ch, "all", name)
 
 def makeCsv(args):
     
@@ -220,6 +272,7 @@ def getCompact(df, ch, test, configs):
     result.drop(["dc_type", "gof_mode"], axis=1, inplace=True)
     return result
 
+
 def getFailing(in_df, ch, test, configs):
     df = getReducedDataframe(in_df, ch, test, configs)
         
@@ -234,6 +287,12 @@ def getReducedDataframe(df, ch, test, configs):
     result = result.rename(columns = {"var":"variable"})
     result.drop(["dc_type", "gof_mode", "test", "channel"], axis=1, inplace=True)
     return result
+
+def saveCsv(df, filename):
+    csv = df.to_csv(index=False, sep=";")
+    file = open(filename, "w+")
+    file.write(csv)
+    file.close()
 
 
 if __name__ == '__main__':

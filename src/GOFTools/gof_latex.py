@@ -70,32 +70,6 @@ class Grid:
         output += " \n " + self.failing.toLatex() + " \n "
         output = output + self.tablepostfix
         return output
-    
-    
-def generate(channels, modes, add_failing, dropCC=False):
-    
-    mtet_df = evalgof.loadDF("../output/all_pvalues.json")
-    tt_df = evalgof.loadDF("../output/tt_pvalues.json")
-        
-    base = "cc"
-    name = "custom"
-    
-    configs = ["cc1", "cc2"] + modes
-    
-    cols = [base] + configs
-    
-    tests = ["saturated", "KS", "AD"]
-    
-    for ch in channels:    
-        for test in tests:
-            if "tt" in ch:
-                df = shape(tt_df, ch, test, configs, cols, dropCC)
-            else:
-                df = shape(mtet_df, ch, test, configs, cols, dropCC)
-                
-#             print df
-            toGrid(df)
-#             toLatex(df)
             
 
 def shape(in_df, ch, test, configs, cols, dropCC=False):
@@ -115,16 +89,14 @@ def shape(in_df, ch, test, configs, cols, dropCC=False):
     
 #     print new
     if not dropCC:
-        renamed = renameCC(new)
-        print renamed
-        return renamed
+#         renamed = renameCC(new)
+#         print renamed
+#         return renamed
     else:
         new.drop(["cc", "cc1", "cc2"], axis=1, inplace=True)
         return new
 
 def toGrid(df):
-    
-    
     
     header_df = df.columns
     header = toRow(map(lambda x: Cell(x), header_df.values))    
@@ -154,34 +126,15 @@ def toGrid(df):
     grid.header = header
     grid.rows = rows
     grid.failing = failing
-    
-#     print grid
-    
-#     print grid.header.var.text
-    
-#     print grid.header.confs[2].text
-    
-#     grid.header.confs[2].color = "red"
-#     grid.header.confs[0].backgroundcolor = "red!7"
-#     
-#     grid.rows[4].confs[0].backgroundcolor = "red!7"
-#     grid.rows[4].confs[0].color = "red"
-#     
-#     grid.rows[6].confs[0].font = "bold"
-#     grid.rows[6].confs[0].backgroundcolor = "green!15"
 
     applyConditionalFormating(grid)
     
     print grid.toLatex()
 
 def toRow(cells):
-#     print "cells"
-#     print cells
     row = Row()
     row.var = cells[0]
     row.confs = cells[1:len(cells)]
-#     print "row.confs"
-#     print row.confs
     return row
 
 def applyConditionalFormating(grid):
@@ -215,8 +168,7 @@ def applyConditionalFormating(grid):
 def toLatex(df):
     csv = df.to_csv(index=False, sep="&")    
     
-    lines = csv.split("\n")    
-#     print lines
+    lines = csv.split("\n")   
     
     for line in lines:
         line += "\\"
