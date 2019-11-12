@@ -6,7 +6,9 @@ import argparse
 
 import evalgof as evalgof
 
-import gof_histo
+
+configs = ["cc", "cc1", "cc2", "nn1", "nn6", "nn13", "nn21"]
+
 
 def main():
     
@@ -38,8 +40,25 @@ def main():
     # Execute the function
     func(args)
 
-def listFailing(args):
-    pass
+def listFailing(args):    
+    
+    if args.configs:            
+        configs = args.configs
+    
+    if args.channel == "all":
+        channels = ["et", "mt", "tt"]
+    else:
+        channels = [args.channel]
+        
+    completedf = pd.DataFrame()
+        
+    for ch in channels:
+        df = evalgof.loadDF("output/{0}_pvalues.json".format(ch))
+        completedf = completedf.append(df, ignore_index=True)
+        f = evalgof.compareFailingVarsNew(df, [ch], configs)        
+        
+    if "all" in args.channel:
+        f = evalgof.compareFailingVarsNew(completedf, channels, configs)
 
 def makeHtml(args):
     pass
@@ -48,15 +67,72 @@ def makePdf(args):
     pass
 
 def makeCsv(args):
-    pass
+    in_df = evalgof.loadDF("output/{0}_pvalues.json".format(args.channel))    
+    
+    if args.channel == "all":
+        channels = ["et", "mt", "tt"]
+    else:
+        channels = [args.channel]
+    
+    if args.configs:            
+        configs = args.configs
+        
+    add_failing = False
+    
+    for ch in channels:
+        for test in ["saturated", "KS", "AD"]:
+            if add_failing:
+                result = getCompact(in_df, ch, test, configs)   
+                print result 
+                csv = result.to_csv(index=False, sep=";")
+                print csv
+                
+                #add failing using evalgof.compareFailingVarsNew(in_df, channel)
+            else:
+                result = getCompact(in_df, ch, test, configs)
+                print result
+                csv = result.to_csv(index=False, sep=";")
+                print csv
 
-def printToConsole(args):
-    pass
+def printToConsole(args):    
+    in_df = evalgof.loadDF("output/{0}_pvalues.json".format(args.channel))    
+    
+    if args.channel == "all":
+        channels = ["et", "mt", "tt"]
+    else:
+        channels = [args.channel]
+    
+    if args.configs:            
+        configs = args.configs
+        
+    add_failing = False
+    
+    for ch in channels:
+        for test in ["saturated", "KS", "AD"]:
+            if add_failing:
+                result = getCompact(in_df, ch, test, configs)   
+                print result 
+                
+                #add failing using evalgof.compareFailingVarsNew(in_df, channel)
+            else:
+                result = getCompact(in_df, ch, test, configs)
+                print result
+            
+
+def getCompact(df, ch, test, configs):
+    result = evalgof.compareSideBySideNew(df, configs[0], configs[1:], test, ch)
+    result = result.rename(columns = {"channel":"ch"})
+    result.drop(["dc_type", "gof_mode"], axis=1, inplace=True)
+    return result
+
+        
+
 
 def makeLatex(args):
     pass
 
 def makeHisto(args):
+    import gof_histo
     
     modes = args.configs
     print "modes:"
