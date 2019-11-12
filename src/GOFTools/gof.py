@@ -72,7 +72,6 @@ def makePdf(args):
     pass
 
 def makeCsv(args):
-    in_df = evalgof.loadDF("output/{0}_pvalues.json".format(args.channel))    
     
     if args.channel == "all":
         channels = ["et", "mt", "tt"]
@@ -84,25 +83,36 @@ def makeCsv(args):
     else:
         configs = defaultConfigs
         
+        
+    completedf = pd.DataFrame()
+        
+    for ch in channels:
+        df = evalgof.loadDF("output/{0}_pvalues.json".format(ch))
+        completedf = completedf.append(df, ignore_index=True)   
+        
     add_failing = False
     
+#     if "all" in args.channel:
+#         do something special
+    
     for ch in channels:
+        df = evalgof.loadDF("output/{0}_pvalues.json".format(ch))
         for test in ["saturated", "KS", "AD"]:
             if add_failing:
-                result = getCompact(in_df, ch, test, configs)   
+                result = getCompact(df, ch, test, configs)   
                 print result 
                 csv = result.to_csv(index=False, sep=";")
                 print csv
                 
                 #add failing using evalgof.compareFailingVarsNew(in_df, channel)
             else:
-                result = getCompact(in_df, ch, test, configs)
+                result = getCompact(df, ch, test, configs)
                 print result
                 csv = result.to_csv(index=False, sep=";")
-                print csv
+                print csv              
+        
 
-def printToConsole(args):    
-    in_df = evalgof.loadDF("output/{0}_pvalues.json".format(args.channel))    
+def printToConsole(args):        
     
     if args.channel == "all":
         channels = ["et", "mt", "tt"]
@@ -114,17 +124,27 @@ def printToConsole(args):
     else:
         configs = defaultConfigs
         
+    completedf = pd.DataFrame()
+        
+    for ch in channels:
+        df = evalgof.loadDF("output/{0}_pvalues.json".format(ch))
+        completedf = completedf.append(df, ignore_index=True)
+        
     add_failing = False
     
+    #     if "all" in args.channel:
+#         do something special
+    
     for ch in channels:
+        df = evalgof.loadDF("output/{0}_pvalues.json".format(ch))
         for test in ["saturated", "KS", "AD"]:
             if add_failing:
-                result = getCompact(in_df, ch, test, configs)   
+                result = getCompact(df, ch, test, configs)   
                 print result 
                 
                 #add failing using evalgof.compareFailingVarsNew(in_df, channel)
             else:
-                result = getCompact(in_df, ch, test, configs)
+                result = getCompact(df, ch, test, configs)
                 print result
             
 
@@ -134,7 +154,43 @@ def printToConsole(args):
 
 
 def makeLatex(args):
-    pass
+    import gof_latex    
+    
+    if args.channel == "all":
+        channels = ["et", "mt", "tt"]
+    else:
+        channels = [args.channel]
+    
+    if args.configs:            
+        configs = args.configs
+    else:
+        configs = defaultConfigs
+        
+    completedf = pd.DataFrame()
+        
+    for ch in channels:
+        df = evalgof.loadDF("output/{0}_pvalues.json".format(ch))
+        completedf = completedf.append(df, ignore_index=True)
+        
+    add_failing = False
+    
+    #     if "all" in args.channel:
+#         do something special
+    
+    tests = ["saturated", "KS", "AD"]
+    
+    for ch in channels:
+        df = evalgof.loadDF("output/{0}_pvalues.json".format(ch))
+        for test in tests:
+            if "tt" in ch:
+                shaped = gof_latex.shape(df, ch, test, configs[1:], configs, False)
+            else:
+                shaped = gof_latex.shape(df, ch, test, configs[1:], configs, False)
+                
+#             print df
+            gof_latex.toGrid(shaped)
+    
+    
 
 def makeHisto(args):
     import gof_histo
@@ -164,7 +220,20 @@ def getCompact(df, ch, test, configs):
     result.drop(["dc_type", "gof_mode"], axis=1, inplace=True)
     return result
 
+def getFailing(in_df, ch, test, configs):
+    df = getReducedDataframe(in_df, ch, test, configs)
+        
+    series = df.apply(lambda x: x <= 0.05).sum(numeric_only=True)
+#     print series
+    series = series.astype(int)
+#     print series
+    return series
 
+def getReducedDataframe(df, ch, test, configs):
+    result = evalgof.compareSideBySideNew(df, configs[0], configs[1:], test, ch)
+    result = result.rename(columns = {"var":"variable"})
+    result.drop(["dc_type", "gof_mode", "test", "channel"], axis=1, inplace=True)
+    return result
 
 
 if __name__ == '__main__':

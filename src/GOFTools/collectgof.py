@@ -125,7 +125,16 @@ def runNew(args):
     
     print "entering runNew..."
     
-    configurations = ["cc", "cc1", "cc2", "nn1", "nn6", "nn13", "nn21"] 
+    common = ["cc", "cc1", "cc2", "nn1", "nn6", "nn13", "nn21"] + ["nn5", "nn10", "nn18"]
+    
+    conf_a = ["nn1a", "nn5a", "nn6a", "nn10a", "nn13a", "nn18a"]
+    conf_a2 = []
+    conf_e = []
+    
+    if args.channel == "tt":
+        configurations = common + conf_a
+    elif args.channel == "et" or args.channel == "mt":
+        configurations = common 
 #     configurations = ["nn1", "nn6", "nn13", "nn21"] 
     
     variables = ["pt_1", 
