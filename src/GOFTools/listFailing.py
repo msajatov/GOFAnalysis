@@ -16,7 +16,8 @@ def main():
     print args.channel
     df = loadDF("output/{0}_pvalues.json".format(args.channel))
     
-    modes = ["cc", "cc1", "cc2"]
+    modes = ["cc", "cc1", "cc2", "nn1", "nn6", "nn13", "nn21"]
+#     modes = ["nn1", "nn6", "nn13", "nn21"]
     
     channels = [args.channel]
 

@@ -125,7 +125,8 @@ def runNew(args):
     
     print "entering runNew..."
     
-    configurations = ["cc", "cc1", "cc2"] 
+    configurations = ["cc", "cc1", "cc2", "nn1", "nn6", "nn13", "nn21"] 
+#     configurations = ["nn1", "nn6", "nn13", "nn21"] 
     
     variables = ["pt_1", 
                  "pt_2", 
