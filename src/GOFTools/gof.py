@@ -7,7 +7,7 @@ import argparse
 import evalgof as evalgof
 
 
-configs = ["cc", "cc1", "cc2", "nn1", "nn6", "nn13", "nn21"]
+defaultConfigs = ["cc", "cc1", "cc2", "nn1", "nn6", "nn13", "nn21"]
 
 
 def main():
@@ -44,6 +44,8 @@ def listFailing(args):
     
     if args.configs:            
         configs = args.configs
+    else:
+        configs = defaultConfigs
     
     if args.channel == "all":
         channels = ["et", "mt", "tt"]
@@ -54,11 +56,14 @@ def listFailing(args):
         
     for ch in channels:
         df = evalgof.loadDF("output/{0}_pvalues.json".format(ch))
-        completedf = completedf.append(df, ignore_index=True)
-        f = evalgof.compareFailingVarsNew(df, [ch], configs)        
+        completedf = completedf.append(df, ignore_index=True)   
         
     if "all" in args.channel:
         f = evalgof.compareFailingVarsNew(completedf, channels, configs)
+    else:
+        for ch in channels:
+            df = evalgof.loadDF("output/{0}_pvalues.json".format(ch))
+            f = evalgof.compareFailingVarsNew(df, [ch], configs)     
 
 def makeHtml(args):
     pass
@@ -76,6 +81,8 @@ def makeCsv(args):
     
     if args.configs:            
         configs = args.configs
+    else:
+        configs = defaultConfigs
         
     add_failing = False
     
@@ -104,6 +111,8 @@ def printToConsole(args):
     
     if args.configs:            
         configs = args.configs
+    else:
+        configs = defaultConfigs
         
     add_failing = False
     
@@ -119,11 +128,7 @@ def printToConsole(args):
                 print result
             
 
-def getCompact(df, ch, test, configs):
-    result = evalgof.compareSideBySideNew(df, configs[0], configs[1:], test, ch)
-    result = result.rename(columns = {"channel":"ch"})
-    result.drop(["dc_type", "gof_mode"], axis=1, inplace=True)
-    return result
+
 
         
 
@@ -151,6 +156,16 @@ def makeHisto(args):
 
 def makePlot(args):
     pass
+
+
+def getCompact(df, ch, test, configs):
+    result = evalgof.compareSideBySideNew(df, configs[0], configs[1:], test, ch)
+    result = result.rename(columns = {"channel":"ch"})
+    result.drop(["dc_type", "gof_mode"], axis=1, inplace=True)
+    return result
+
+
+
 
 if __name__ == '__main__':
     main()
