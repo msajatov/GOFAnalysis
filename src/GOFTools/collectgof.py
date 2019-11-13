@@ -11,7 +11,15 @@ def main():
     args = parser.parse_args()
     
     if args.input == "new":
-        runNew(args)
+        runNew(args, "")
+        return
+    
+    if args.input == "new10":
+        runNew(args, "10")
+        return
+    
+    if args.input == "new20":
+        runNew(args, "20")
         return
     
     #configurations = ["cc", "cc1", "nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10"]
@@ -121,16 +129,22 @@ def main():
     saveAsJson(completepvalues, "{0}_pvalues".format(args.channel))
     
 
-def runNew(args):    
+def runNew(args, boundary):    
     
     print "entering runNew..."
     
-    common = ["cc", "cc1", "cc2", "nn1", "nn6", "nn13", "nn21"] + ["nn5", "nn10", "nn18"]
+    if boundary == "":
+        common = ["cc", "cc1", "cc2", "nn1", "nn6", "nn13", "nn21"] + ["nn5", "nn10", "nn18"]
+        conf_a = ["nn1a", "nn5a", "nn6a", "nn10a", "nn13a", "nn18a"]
+        conf_a2 = []
+        conf_e = []
+    elif boundary == "10" or boundary == "20":
+        common = ["cc", "cc1", "cc2"]
+        conf_a = []
+        conf_a2 = []
+        conf_e = []
     
-    conf_a = ["nn1a", "nn5a", "nn6a", "nn10a", "nn13a", "nn18a"]
-    conf_a2 = []
-    conf_e = []
-    
+       
     if args.channel == "tt":
         configurations = common + conf_a
     elif args.channel == "et" or args.channel == "mt":
@@ -165,8 +179,13 @@ def runNew(args):
     else:
         channels = [args.channel]
         
+    if boundary == "":
     #gof_modes = ["results_w_emb", "results_wo_emb"]
-    base = "/afs/cern.ch/work/m/msajatov/private/cms2/CMSSW_8_1_0/src/CombineHarvester/HTTSM2017/fittest/{0}/gof/2017"
+        base = "/afs/cern.ch/work/m/msajatov/private/cms2/CMSSW_8_1_0/src/CombineHarvester/HTTSM2017/fittest/{0}/gof/2017"
+    elif boundary == "10":
+        base = "/afs/cern.ch/work/m/msajatov/private/cms2/CMSSW_8_1_0/src/CombineHarvester/HTTSM2017/fittest2/{0}/gof/2017"
+    elif boundary == "20":
+        base = "/afs/cern.ch/work/m/msajatov/private/cms2/CMSSW_8_1_0/src/CombineHarvester/HTTSM2017/fittest3/{0}/gof/2017"
     
     completepvalues = {}
     
@@ -225,11 +244,15 @@ def runNew(args):
     
     
     #saveAsJson(pvalues, "pvalues")
+    if boundary == "":
+        saveAsJson(completepvalues, "{0}_pvalues".format(args.channel), "output")
+    elif boundary == "10":
+        saveAsJson(completepvalues, "{0}_pvalues".format(args.channel), "output10")
+    elif boundary == "20":
+        saveAsJson(completepvalues, "{0}_pvalues".format(args.channel), "output20")
     
-    saveAsJson(completepvalues, "{0}_pvalues".format(args.channel))
-    
-def saveAsJson(pvalues, filename):
-    dir = "output"
+def saveAsJson(pvalues, filename, outputbase):
+    dir = outputbase
     if not os.path.exists(dir):
         os.makedirs(dir)
     with open(os.path.join(dir, filename + ".json"), 'wb') as FSO:

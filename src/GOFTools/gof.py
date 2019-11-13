@@ -18,6 +18,7 @@ def main():
     parser.add_argument('-t', dest='test', help='Test', choices = ['saturated', 'KS', 'AD', 'all'], default='all')
     parser.add_argument('configs', nargs="*", help='Configurations', default=[])
     parser.add_argument('-m', dest='method', help='Method to use', default=[])
+    parser.add_argument('-i', dest='input', help='Input dir to use', default="output")
     parser.add_argument('-tt', dest='tt_variant', help='tt Variant', choices = ['vanilla', 'a', 'a2', 'e'], default='vanilla')
     args = parser.parse_args()
 
@@ -56,14 +57,14 @@ def listFailing(args):
     completedf = pd.DataFrame()
         
     for ch in channels:
-        df = evalgof.loadDF("output/{0}_pvalues.json".format(ch))
+        df = loadRawDF(ch, args.input)
         completedf = completedf.append(df, ignore_index=True)   
         
     if "all" in args.channel:
         f = evalgof.compareFailingVarsNew(completedf, channels, configs)
     else:
         for ch in channels:
-            df = evalgof.loadDF("output/{0}_pvalues.json".format(ch))
+            df = loadRawDF(ch, args.input)
             f = evalgof.compareFailingVarsNew(df, [ch], configs)     
 
 def makeHtml(args):
@@ -84,7 +85,7 @@ def makeHtml(args):
         
     for ch in channels:
         html = ""
-        df = evalgof.loadDF("output/{0}_pvalues.json".format(ch))
+        df = loadRawDF(ch, args.input)
         for test in ["saturated", "KS", "AD"]:
             result = getCompact(df, ch, test, configs)
             html = html + gof_pdf.createHtml(result, configs)    
@@ -113,7 +114,7 @@ def makePdf(args):
         
     for ch in channels:
         html = ""
-        df = evalgof.loadDF("output/{0}_pvalues.json".format(ch))
+        df = loadRawDF(ch, args.input)
         for test in ["saturated", "KS", "AD"]:
             result = getCompact(df, ch, test, configs)
             html = html + gof_pdf.createHtml(result, configs)    
@@ -139,7 +140,7 @@ def makeCsv(args):
     completedf = pd.DataFrame()
         
     for ch in channels:
-        df = evalgof.loadDF("output/{0}_pvalues.json".format(ch))
+        df = loadRawDF(ch, args.input)
         completedf = completedf.append(df, ignore_index=True)   
         
     add_failing = False
@@ -148,7 +149,7 @@ def makeCsv(args):
 #         do something special
     
     for ch in channels:
-        df = evalgof.loadDF("output/{0}_pvalues.json".format(ch))
+        df = loadRawDF(ch, args.input)
         for test in ["saturated", "KS", "AD"]:
             if add_failing:
                 result = getCompact(df, ch, test, configs)   
@@ -179,7 +180,7 @@ def printToConsole(args):
     completedf = pd.DataFrame()
         
     for ch in channels:
-        df = evalgof.loadDF("output/{0}_pvalues.json".format(ch))
+        df = loadRawDF(ch, args.input)
         completedf = completedf.append(df, ignore_index=True)
         
     add_failing = False
@@ -188,7 +189,7 @@ def printToConsole(args):
 #         do something special
     
     for ch in channels:
-        df = evalgof.loadDF("output/{0}_pvalues.json".format(ch))
+        df = loadRawDF(ch, args.input)
         for test in ["saturated", "KS", "AD"]:
             if add_failing:
                 result = getCompact(df, ch, test, configs)   
@@ -221,7 +222,7 @@ def makeLatex(args):
     completedf = pd.DataFrame()
         
     for ch in channels:
-        df = evalgof.loadDF("output/{0}_pvalues.json".format(ch))
+        df = loadRawDF(ch, args.input)
         completedf = completedf.append(df, ignore_index=True)
         
     add_failing = False
@@ -232,7 +233,7 @@ def makeLatex(args):
     tests = ["saturated", "KS", "AD"]
     
     for ch in channels:
-        df = evalgof.loadDF("output/{0}_pvalues.json".format(ch))
+        df = loadRawDF(ch, args.input)
         for test in tests:
             if "tt" in ch:
                 shaped = gof_latex.shape(df, ch, test, configs[1:], configs, False)
@@ -281,6 +282,10 @@ def getFailing(in_df, ch, test, configs):
     series = series.astype(int)
 #     print series
     return series
+
+def loadRawDF(ch, dir):
+    df = evalgof.loadDF("{0}/{1}_pvalues.json".format(dir, ch))
+    return df
 
 def getReducedDataframe(df, ch, test, configs):
     result = evalgof.compareSideBySideNew(df, configs[0], configs[1:], test, ch)
