@@ -10,6 +10,10 @@ def main():
     parser.add_argument('-i', dest='input', help='Input', default="")
     args = parser.parse_args()
     
+    if args.input != "":
+        runNew(args, args.input)
+        return
+    
     if args.input == "new":
         runNew(args, "")
         return
@@ -133,22 +137,41 @@ def runNew(args, boundary):
     
     print "entering runNew..."
     
+    conf_tt_additional = []
+    conf_et_additional = []
+    conf_mt_additional = []
+    
     if boundary == "":
         common = ["cc", "cc1", "cc2", "nn1", "nn6", "nn13", "nn21"] + ["nn5", "nn10", "nn18"]
         conf_a = ["nn1a", "nn5a", "nn6a", "nn10a", "nn13a", "nn18a"]
         conf_a2 = []
         conf_e = []
-    elif boundary == "10" or boundary == "20":
-        common = ["cc", "cc1", "cc2"]
+    elif boundary == "original":
+        common = ["cc", "cc1", "cc2", "nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10", 
+                          "nn11", "nn12", "nn13", "nn14", "nn15", "nn16", "nn17", "nn18", "nn21"]
+        conf_a = ["nn1a", "nn2a", "nn3a", "nn4a", "nn5a", "nn6a", "nn7a", "nn8a", "nn9a", "nn10a",
+                          "nn11a", "nn12a", "nn13a", "nn14a", "nn15a", "nn16a", "nn17a", "nn18a", "nn22a", "nn23a"]
+        conf_a2 = ["nn1a2", "nn2a2", "nn3a2", "nn4a2", "nn5a2", "nn6a2", "nn7a2", "nn8a2", "nn9a2", "nn10a2", 
+                          "nn11a2", "nn12a2", "nn13a2", "nn14a2", "nn15a2", "nn16a2", "nn17a2", "nn18a2"]
+        conf_e = ["nn11e", "nn12e", "nn14e", "nn16e", "nn18e"]
+        conf_tt_additional = ["xx", "nn19", "nn20"] 
+        conf_et_additional = ["nn22", "nn23"]
+        conf_mt_additional = ["nn22", "nn23"]       
+    else:
+        common = ["cc", "cc1", "cc2"] + ["nn1", "nn2", "nn3", "nn4", "nn5", "nn6", "nn7", "nn8", "nn9", "nn10"] + \
+          ["nn11", "nn12", "nn13", "nn14", "nn15", "nn16", "nn17", "nn18"] + \
+          ["nn21", "nn22", "nn23"] + ["xx", "w", "tt"]
         conf_a = []
         conf_a2 = []
         conf_e = []
     
        
     if args.channel == "tt":
-        configurations = common + conf_a
-    elif args.channel == "et" or args.channel == "mt":
-        configurations = common 
+        configurations = common + conf_a + conf_a2 + conf_e + conf_tt_additional
+    elif args.channel == "et":
+        configurations = common + conf_et_additional
+    elif args.channel == "mt":
+        configurations = common + conf_mt_additional
 #     configurations = ["nn1", "nn6", "nn13", "nn21"] 
     
     variables = ["pt_1", 
@@ -182,10 +205,14 @@ def runNew(args, boundary):
     if boundary == "":
     #gof_modes = ["results_w_emb", "results_wo_emb"]
         base = "/afs/cern.ch/work/m/msajatov/private/cms2/CMSSW_8_1_0/src/CombineHarvester/HTTSM2017/fittest/{0}/gof/2017"
+    elif boundary == "original":
+        base = "/afs/cern.ch/work/m/msajatov/private/cms/CMSSW_8_1_0/src/CombineHarvester/HTTSM2017/emb_dc/results_w_emb/{0}/gof/2017"
     elif boundary == "10":
         base = "/afs/cern.ch/work/m/msajatov/private/cms2/CMSSW_8_1_0/src/CombineHarvester/HTTSM2017/fittest2/{0}/gof/2017"
     elif boundary == "20":
         base = "/afs/cern.ch/work/m/msajatov/private/cms2/CMSSW_8_1_0/src/CombineHarvester/HTTSM2017/fittest3/{0}/gof/2017"
+    else:
+        base = "/afs/cern.ch/work/m/msajatov/private/cms2/CMSSW_8_1_0/src/CombineHarvester/HTTSM2017/fittest{1}/{0}/gof/2017"
     
     completepvalues = {}
     
@@ -201,7 +228,12 @@ def runNew(args, boundary):
             for conf in configurations:  
                 print conf              
                 pvalues[conf] = {}
-                basepath = base.format(conf)
+                if not boundary:
+                    basepath = base.format(conf)
+                elif not "original" in boundary:
+                    basepath = base.format(conf, boundary)
+                else:
+                    basepath = base.format(conf)
                 for var in variables:
                     pvalues[conf][var] = {}
                     for test in tests:
@@ -246,10 +278,14 @@ def runNew(args, boundary):
     #saveAsJson(pvalues, "pvalues")
     if boundary == "":
         saveAsJson(completepvalues, "{0}_pvalues".format(args.channel), "output")
+    elif boundary == "original":
+        saveAsJson(completepvalues, "{0}_pvalues".format(args.channel), "output_original")
     elif boundary == "10":
         saveAsJson(completepvalues, "{0}_pvalues".format(args.channel), "output10")
     elif boundary == "20":
         saveAsJson(completepvalues, "{0}_pvalues".format(args.channel), "output20")
+    else:
+        saveAsJson(completepvalues, "{0}_pvalues".format(args.channel), "output{0}".format(boundary))
     
 def saveAsJson(pvalues, filename, outputbase):
     dir = outputbase

@@ -49,7 +49,7 @@ def getDataFrameForTest(test, modes, type):
         if ch == "tt":            
             modes = replaceModesForTauTau(modes, type)
             
-        in_df = evalgof.loadDF("output/{0}_pvalues.json".format(ch))            
+        in_df = evalgof.loadDF("output6/{0}_pvalues.json".format(ch))            
             
         reduced = getReducedDataframe(in_df, ch, test, modes, modes)
         
