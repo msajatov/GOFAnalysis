@@ -21,7 +21,7 @@ def main():
 
 def runNew(args, boundary):    
     
-    print "entering runNew..."
+#     print "entering runNew..."
     
     if args.configs:            
         common = args.configs
@@ -114,14 +114,27 @@ def runNew(args, boundary):
                     for test in tests:
                         pvalues[conf][var][test] = {}
                         for channel in channels:
-                            path = "{0}/{1}/{2}/{3}/fitDiagnostics2017.root".format(basepath, var, test, channel)               
                             
-                            tfile = R.TFile(path)
-                            tree = tfile.tree_fit_sb
+                            try:
+                                path = "{0}/{1}/{2}/{3}/fitDiagnostics2017.root".format(basepath, var, test, channel)               
+                                
+                                tfile = R.TFile(path)
+                                tree = tfile.tree_fit_sb                            
+                                
+                                leaf = tree.GetLeaf("fit_status")
+                                leaf.GetBranch().GetEntry(0)
+                                fit_status_value = leaf.GetValue()
+                                
+                                if fit_status_value != 0:
+                                    print "{3}, var: {0}; channel: {1}; fit_status = {2}".format(var, channel, fit_status_value, conf)
+                            except:
+                                print "Exception for {2}, var: {0}; channel: {1}".format(var, channel, conf)
                             
-                            print "var: {0}; channel: {1}".format(var, channel)
-                            tree.Scan("fit_status:r")
-                            
+#                             print "var: {0}; channel: {1}".format(var, channel)
+#                             tree.Scan("fit_status:r")
+                print ""
+                print "----------------------------------------"
+                print ""            
     
 def saveAsJson(pvalues, filename, outputbase):
     dir = outputbase
