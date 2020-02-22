@@ -8,6 +8,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', dest='channel', help='Decay channel', choices = ['mt', 'et', 'tt', 'all'], default='all')
     parser.add_argument('-i', dest='input', help='Input', default="")
+    parser.add_argument('conf', nargs="*", help='Configurations', default=[])
     args = parser.parse_args()
     
     if args.input != "":
@@ -174,6 +175,10 @@ def runNew(args, boundary):
     elif args.channel == "mt":
         configurations = common + conf_mt_additional
 #     configurations = ["nn1", "nn6", "nn13", "nn21"] 
+
+    if args.conf:
+        print "confs from argument"
+        configurations = args.conf
     
     variables = ["pt_1", 
                  "pt_2", 

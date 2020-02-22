@@ -147,8 +147,8 @@ def compareSideBySideNew(df, baseconf, configs, test="saturated", channel="et", 
     
     # only keep necessary columns (otherwise problems with merge)
     subset = subset.loc[:, merge_on + ["pvalue"] + ["conf"]]    
-    print "subset:"
-    print subset                      
+    # print "subset:"
+    # print subset                      
         
     subset = subset.sort_values(by=["var", "conf"])
     basedf = subset.query("conf == '{0}'".format(baseconf))  
@@ -175,8 +175,8 @@ def compareSideBySide(df, baseconf, configs, test="saturated", channel="et", mer
     
     # only keep necessary columns (otherwise problems with merge)
     subset = subset.loc[:, merge_on + ["pvalue"] + ["conf"]]    
-    print "subset:"
-    print subset                      
+    # print "subset:"
+    # print subset                      
         
     subset = subset.sort_values(by=["var", "conf"])
     basedf = subset.query("conf == '{0}'".format(baseconf))  
