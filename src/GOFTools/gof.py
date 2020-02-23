@@ -7,6 +7,10 @@ import os
 
 import evalgof as evalgof
 
+import matplotlib as mpl
+#mpl.use('Agg')
+import matplotlib.pyplot as plt
+
 
 defaultConfigs = ["cc", "cc1", "cc2", "nn1", "nn6", "nn13", "nn21", "nn5", "nn10", "nn18"]
 
@@ -31,7 +35,7 @@ def main():
         "print": printToConsole,
         "latex": makeLatex,
         "histo": makeHisto,
-        "plot": makePlot
+        "plot": makePlot,
     }
     
     if not args.method in switcher:
@@ -264,7 +268,56 @@ def makeHisto(args):
         gof_histo.plotPValueHisto(df, type, "allTests")
 
 def makePlot(args):
-    pass
+    if args.channel == "all":
+        channels = ["et", "mt", "tt"]
+    else:
+        channels = [args.channel]
+    
+    if args.configs:            
+        configs = args.configs
+    else:
+        configs = defaultConfigs
+        
+    completedf = pd.DataFrame()
+        
+    for ch in channels:
+        df = loadRawDF(ch, args.input)
+        completedf = completedf.append(df, ignore_index=True)
+        
+    add_failing = False
+    
+    for ch in channels:
+        df = loadRawDF(ch, args.input)
+        #for test in ["saturated", "KS", "AD"]:  
+        for test in ["saturated"]:  
+            result = getCompact(df, ch, test, configs)
+            print result
+            print "attempting to plot df: "
+
+            fig = plt.figure(facecolor='w', figsize=(6,6))
+
+            plt.xlim(-0.5, 17.5)  
+            plt.ylim(0, 1)  
+
+            ax = fig.add_subplot(1,1,1)        
+
+            for config in configs:
+                ax.plot(xrange(len(result)), result[config], "o", color="lightgrey", markeredgecolor="lightgrey", label=config)
+
+            ax.plot(xrange(len(result)), result["snn8"], "_", color="red", markeredgecolor="red", markersize=12, markeredgewidth=2, label="snn8")
+
+            plt.xticks(np.arange(len(result)), result["var"], rotation="vertical") 
+            plt.yticks(np.arange(0, 1.1, step=0.1))  
+
+            ax.grid(which='major', axis='both', linestyle='-', color='lightgrey')    
+            ax.set_axisbelow(True)        
+            plt.legend(loc='lower left', bbox_to_anchor=(0.0, 1.01), ncol=2, borderaxespad=0, frameon=False, numpoints=1, fontsize=12)         
+
+            #plt.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.1)
+
+            plt.show()
+
+    #print completedf
 
 
 def getCompact(df, ch, test, configs):
