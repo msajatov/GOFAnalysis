@@ -8,7 +8,7 @@ import os
 import evalgof as evalgof
 
 import matplotlib as mpl
-#mpl.use('Agg')
+mpl.use('Agg')
 import matplotlib.pyplot as plt
 
 
@@ -24,6 +24,9 @@ def main():
     parser.add_argument('-m', dest='method', help='Method to use', default=[])
     parser.add_argument('-i', dest='input', help='Input dir to use', default="output")
     parser.add_argument('-tt', dest='tt_variant', help='tt Variant', choices = ['vanilla', 'a', 'a2', 'e'], default='vanilla')
+    parser.add_argument('-fg', dest='fg', nargs="*", help='Foreground configurations', default=[])
+    parser.add_argument('-bg', dest='bg', nargs="*", help='Background configurations', default=[])
+    parser.add_argument('-dummy', dest='dummy', help='Bg legend entry for plot', default="")
     args = parser.parse_args()
 
 
@@ -267,13 +270,20 @@ def makeHisto(args):
         df = gof_histo.getCompleteDataFrame(modes, type, tests)    
         gof_histo.plotPValueHisto(df, type, "allTests")
 
+
+
+    
+
+
 def makePlot(args):
     if args.channel == "all":
         channels = ["et", "mt", "tt"]
     else:
         channels = [args.channel]
     
-    if args.configs:            
+    if args.fg or args.bg:
+        configs = args.fg + args.bg
+    elif args.configs:  
         configs = args.configs
     else:
         configs = defaultConfigs
@@ -289,36 +299,111 @@ def makePlot(args):
     for ch in channels:
         df = loadRawDF(ch, args.input)
         #for test in ["saturated", "KS", "AD"]:  
-        for test in ["saturated"]:  
+        for test in ["saturated", "KS", "AD"]:  
             result = getCompact(df, ch, test, configs)
             print result
             print "attempting to plot df: "
 
-            fig = plt.figure(facecolor='w', figsize=(6,6))
+            fig = plt.figure(facecolor='w', figsize=(6,7))
 
             plt.xlim(-0.5, 17.5)  
             plt.ylim(0, 1)  
 
-            ax = fig.add_subplot(1,1,1)        
+            ax = fig.add_subplot(1,1,1)   
+            plt.subplots_adjust(top=0.85)     
 
-            for config in configs:
-                ax.plot(xrange(len(result)), result[config], "o", color="lightgrey", markeredgecolor="lightgrey", label=config)
+            bg_handles = {}
+            fg_handles = {}
 
-            ax.plot(xrange(len(result)), result["snn8"], "_", color="red", markeredgecolor="red", markersize=12, markeredgewidth=2, label="snn8")
+            for config in args.bg:
+                confObj = Config(config)
+                bg_handles[config] = plotBackgroundByType(ax, confObj, result)
+                #ax.plot(xrange(len(result)), result[config], "o", color="lightgrey", markeredgecolor="lightgrey", label=config)
+            for config in args.fg:
+                confObj = Config(config)
+                fg_handles[config] = plotForegroundByType(ax, confObj, result)
+                #ax.plot(xrange(len(result)), result[config], "_", markersize=12, markeredgewidth=2, label=config)
 
             plt.xticks(np.arange(len(result)), result["var"], rotation="vertical") 
             plt.yticks(np.arange(0, 1.1, step=0.1))  
 
             ax.grid(which='major', axis='both', linestyle='-', color='lightgrey')    
-            ax.set_axisbelow(True)        
-            plt.legend(loc='lower left', bbox_to_anchor=(0.0, 1.01), ncol=2, borderaxespad=0, frameon=False, numpoints=1, fontsize=12)         
+            ax.set_axisbelow(True) 
+
+            fg_handle_list = [fg_handles[conf][0] for conf in args.fg]
+
+            dummy_xrange = xrange(20, 20 + len(result))
+            print dummy_xrange
+
+            if args.dummy:
+                # dummy, make invisible series
+                dummy_handle = ax.plot(dummy_xrange, result[config], "o", color="lightgrey", markeredgecolor="lightgrey", label=args.dummy)
+                fg_handle_list += dummy_handle
+
+            plt.hlines(0.05, -0.5, 17.5, colors='red')
+
+            #plt.legend(loc='lower left', bbox_to_anchor=(0.0, 1.01), ncol=2, borderaxespad=0, frameon=False, numpoints=1, fontsize=12) 
+            plt.legend(loc='lower left', bbox_to_anchor=(0.0, 1.01, 1.0, 0.2), ncol=4, borderaxespad=0, frameon=False, numpoints=1, fontsize=12, \
+                handletextpad=0.1, handles=fg_handle_list)     
+
+            plt.title("{0} {1}".format(ch, test), y=1.1)    
 
             #plt.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.1)
 
-            plt.show()
+            #plt.show()
+
+            path = "/eos/user/m/msajatov/wormhole/pvalue_plots"
+            plt.savefig(os.path.join(path, "{0}_{1}.png".format(ch, test)))
+            plt.savefig(os.path.join(path, "{0}_{1}.pdf".format(ch, test)))
 
     #print completedf
 
+
+def plotForegroundByType(ax, confObj, result):
+    config = confObj.getRawName()
+    if config == "cc":
+        handle = ax.plot(xrange(len(result)), result[config], "_", color="black", markeredgecolor="black", markersize=12, markeredgewidth=2, label=confObj.getName())
+        pass
+    elif config == "cc1":
+        handle = ax.plot(xrange(len(result)), result[config], "_", color="red", markeredgecolor="red", markersize=12, markeredgewidth=2, label=confObj.getName())
+        pass
+    elif config == "cc2":
+        handle = ax.plot(xrange(len(result)), result[config], "_", color="orange", markeredgecolor="orange", markersize=12, markeredgewidth=2, label=confObj.getName())
+        pass
+    elif config == "tt":
+        #ax.plot(xrange(len(result)), result[config], "^", color="#9B98CC", markeredgecolor="#9B98CC", label=config)
+        handle = ax.plot(xrange(len(result)), result[config], "^", color="#795A98", markeredgecolor="#795A98", label=confObj.getName())
+        
+        pass
+    elif config == "w":
+        #ax.plot(xrange(len(result)), result[config], "^", color="#DE5A6A", markeredgecolor="#DE5A6A", label=config)
+        handle = ax.plot(xrange(len(result)), result[config], "^", color="#DE5A6A", markeredgecolor="#DE5A6A", label=confObj.getName())
+        pass
+    elif config == "xx":
+        #ax.plot(xrange(len(result)), result[config], "^", color="#FACAFF", markeredgecolor="#FACAFF", label=config)
+        handle = ax.plot(xrange(len(result)), result[config], "^", color="#f0c9ee", markeredgecolor="#f0c9ee", label=confObj.getName())
+        pass
+    else:
+        handle = ax.plot(xrange(len(result)), result[config], "_", markersize=12, markeredgewidth=2, label=confObj.getName())
+
+    return handle
+
+
+def plotBackgroundByType(ax, confObj, result):
+    config = confObj.getRawName()
+    if config == "cc":
+        handle = ax.plot(xrange(len(result)), result[config], "_", color="#DEDEE0", markeredgecolor="#DEDEE0", markersize=12, markeredgewidth=2, label=confObj.getName())
+        pass
+    elif config == "cc1":
+        handle = ax.plot(xrange(len(result)), result[config], "_", color="#DEDEE0", markeredgecolor="#DEDEE0", markersize=12, markeredgewidth=2, label=confObj.getName())
+        pass
+    elif config == "cc2":
+        handle = ax.plot(xrange(len(result)), result[config], "_", color="#DEDEE0", markeredgecolor="#DEDEE0", markersize=12, markeredgewidth=2, label=confObj.getName())
+        pass
+    else:
+        handle = ax.plot(xrange(len(result)), result[config], "o", color="#DEDEE0", markeredgecolor="#DEDEE0", label=confObj.getName())
+
+    return handle
 
 def getCompact(df, ch, test, configs):
     result = evalgof.compareSideBySideNew(df, configs[0], configs[1:], test, ch)
@@ -352,6 +437,25 @@ def saveCsv(df, filename):
     file.write(csv)
     file.close()
 
+class Config:
+    def __init__(self, rawname):
+        self.rawname = rawname
+        self.namedict = {}
+        self.namedict["tt"] = "TT"
+        self.namedict["w"] = "W"
+        self.namedict["xx"] = "QCD"
+        self.namedict["cc"] = "MC1"
+        self.namedict["cc1"] = "MC2"
+        self.namedict["cc2"] = "MC3"
+
+    def getName(self):
+        if self.rawname in self.namedict:
+            return self.namedict[self.rawname]
+        else:
+            return self.rawname
+
+    def getRawName(self):
+        return self.rawname
 
 if __name__ == '__main__':
     main()
