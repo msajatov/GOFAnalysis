@@ -1,4 +1,6 @@
-.ipynb_checkpoints/
+*.pyc
+*.pdf
+*.html
 
-*.json
-*.txt
+plots/
+histo_plots/
