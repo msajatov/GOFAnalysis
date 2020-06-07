@@ -20,13 +20,14 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', dest='channel', help='Decay channel', choices = ['mt', 'et', 'tt', 'all'], default='all')
     parser.add_argument('-t', dest='test', help='Test', choices = ['saturated', 'KS', 'AD', 'all'], default='all')
-    parser.add_argument('configs', nargs="*", help='Configurations', default=[])
+    parser.add_argument('--conf', dest='configs', nargs="*", help='Configurations', default=[])
     parser.add_argument('-m', dest='method', help='Method to use', default=[])
     parser.add_argument('-i', dest='input', help='Input dir to use', default="output")
     parser.add_argument('-tt', dest='tt_variant', help='tt Variant', choices = ['vanilla', 'a', 'a2', 'e'], default='vanilla')
     parser.add_argument('-fg', dest='fg', nargs="*", help='Foreground configurations', default=[])
     parser.add_argument('-bg', dest='bg', nargs="*", help='Background configurations', default=[])
     parser.add_argument('-dummy', dest='dummy', help='Bg legend entry for plot', default="")
+    parser.add_argument('--vars', nargs="*", help='Variables', default=[])
     args = parser.parse_args()
 
 
@@ -39,6 +40,7 @@ def main():
         "latex": makeLatex,
         "histo": makeHisto,
         "plot": makePlot,
+        "seeds": evalSeeds
     }
     
     if not args.method in switcher:
@@ -171,6 +173,32 @@ def makeCsv(args):
                 csv = result.to_csv(index=False, sep=";")
                 print csv              
         
+def evalSeeds(args):
+
+    ch = args.channel
+
+    df = loadRawDF(ch, args.input, seeds=True)
+
+    for conf in args.configs:
+        # print conf
+        confdf = df.query("conf == '{0}'".format(conf))
+        # print confdf
+        for var in args.vars:
+            print "{0} --- {1}".format(conf, var)
+            vardf = confdf.query("var == '{0}'".format(var))
+            aggregate = vardf.query("seed == 'aggregate'")["pvalue"]
+            print "Aggregate: {0}".format(aggregate)
+
+            mean = vardf.query("seed != 'aggregate'")["pvalue"].mean(axis=0)
+            stddev = vardf.query("seed != 'aggregate'")["pvalue"].std(axis=0)
+            # print "Mean: {0}".format(mean)
+            # print "Sigma: {0}".format(stddev)
+
+            print "{0} +- {1}".format(mean, stddev)
+            nominal = vardf.query("seed == '1230:1249:1'")["pvalue"]
+            print "Nominal: {0}".format(nominal)
+
+    # print df
 
 def printToConsole(args):        
     
@@ -370,10 +398,18 @@ def plotForegroundByType(ax, confObj, result):
     elif config == "cc2":
         handle = ax.plot(xrange(len(result)), result[config], "_", color="orange", markeredgecolor="orange", markersize=12, markeredgewidth=2, label=confObj.getName())
         pass
+    elif config == "ccemb":
+        handle = ax.plot(xrange(len(result)), result[config], "x", color="black", markeredgecolor="black", markersize=12, markeredgewidth=2, label=confObj.getName())
+        pass
+    elif config == "ccemb1":
+        handle = ax.plot(xrange(len(result)), result[config], "x", color="red", markeredgecolor="red", markersize=12, markeredgewidth=2, label=confObj.getName())
+        pass
+    elif config == "ccemb2":
+        handle = ax.plot(xrange(len(result)), result[config], "x", color="orange", markeredgecolor="orange", markersize=12, markeredgewidth=2, label=confObj.getName())
+        pass
     elif config == "tt":
         #ax.plot(xrange(len(result)), result[config], "^", color="#9B98CC", markeredgecolor="#9B98CC", label=config)
         handle = ax.plot(xrange(len(result)), result[config], "^", color="#795A98", markeredgecolor="#795A98", label=confObj.getName())
-        
         pass
     elif config == "w":
         #ax.plot(xrange(len(result)), result[config], "^", color="#DE5A6A", markeredgecolor="#DE5A6A", label=config)
@@ -421,8 +457,13 @@ def getFailing(in_df, ch, test, configs):
 #     print series
     return series
 
-def loadRawDF(ch, dir):
-    df = evalgof.loadDF("{0}/{1}_pvalues.json".format(dir, ch))
+def loadRawDF(ch, dir, seeds=False):
+
+    path = "{0}/{1}_pvalues.json".format(dir, ch)
+    if seeds:
+        path = path.replace(".json", "_seeds.json")
+
+    df = evalgof.loadDF(path, seeds=seeds)
     return df
 
 def getReducedDataframe(df, ch, test, configs):
@@ -444,9 +485,9 @@ class Config:
         self.namedict["tt"] = "TT"
         self.namedict["w"] = "W"
         self.namedict["xx"] = "QCD"
-        self.namedict["cc"] = "MC1"
-        self.namedict["cc1"] = "MC2"
-        self.namedict["cc2"] = "MC3"
+        # self.namedict["cc"] = "MC1"
+        # self.namedict["cc1"] = "MC2"
+        # self.namedict["cc2"] = "MC3"
 
     def getName(self):
         if self.rawname in self.namedict:

@@ -5,7 +5,7 @@ import sys
 sys.path.append("../") # go to parent dir
 
 
-def loadDF(relpath):
+def loadDF(relpath, seeds=False):
     
     pvalues = load(relpath)
     
@@ -22,32 +22,52 @@ def loadDF(relpath):
     tests = ["saturated", "KS", "AD"]
     channels = ["et", "mt", "tt"]
     
-    temp = next(pvalues.itervalues())
-    temp = next(temp.itervalues())
+    # temp = next(pvalues.itervalues())
+    # temp = next(temp.itervalues())
     
-    for key, value in temp.items():
-        confs.append(key)
+    # for key, value in temp.items():
+    #     confs.append(key)
         
-    temp = next(temp.itervalues())
-    for key, value in temp.items():
-        variables.append(key)
+    # temp = next(temp.itervalues())
+    # print "temp"
+    # print temp
+
+    # if seeds:
+    #     temp = next(temp.itervalues())
+    #     print "temp"
+    #     print temp
+
+    # for key, value in temp.items():
+    #     variables.append(key)
     
-    for igv in ignorevars:
-        variables.remove(igv)
+    # for igv in ignorevars:
+    #     variables.remove(igv)
     
     rows_list = []
     for dc_type_key, dc_type_val in pvalues.items():
         for gof_mode_key, gof_mode_val in dc_type_val.items():            
             for confkey, confval in gof_mode_val.items():
-                for varkey, varval in confval.items():
-                    for testkey, testval in varval.items():
-                        for chkey, chval in testval.items():
-                            new_row = {'dc_type':dc_type_key, 'gof_mode':gof_mode_key, 'conf':confkey, 'var':varkey, 'test':testkey, 'channel':chkey, 'pvalue':chval}
-                            rows_list.append(new_row)
-        #                     df = df.append(new_row, ignore_index=True)
+                if seeds:
+                    for seedkey, seedval in confval.items():
+                        for varkey, varval in seedval.items():
+                            for testkey, testval in varval.items():
+                                for chkey, chval in testval.items():
+                                    new_row = {'dc_type':dc_type_key, 'gof_mode':gof_mode_key, 'conf':confkey, 'seed':seedkey, 'var':varkey, 'test':testkey, 'channel':chkey, 'pvalue':chval}
+                                    rows_list.append(new_row)
+                #                     df = df.append(new_row, ignore_index=True)
+                else:
+                    for varkey, varval in confval.items():
+                        for testkey, testval in varval.items():
+                            for chkey, chval in testval.items():
+                                new_row = {'dc_type':dc_type_key, 'gof_mode':gof_mode_key, 'conf':confkey, 'var':varkey, 'test':testkey, 'channel':chkey, 'pvalue':chval}
+                                rows_list.append(new_row)
+            #                     df = df.append(new_row, ignore_index=True)
                     
-            
-    df = pd.DataFrame(rows_list, columns=["dc_type", "gof_mode", "conf", "var", "test", "channel", "pvalue"])     
+
+    if seeds:
+        df = pd.DataFrame(rows_list, columns=["dc_type", "gof_mode", "conf", "seed", "var", "test", "channel", "pvalue"])     
+    else:  
+        df = pd.DataFrame(rows_list, columns=["dc_type", "gof_mode", "conf", "var", "test", "channel", "pvalue"])     
     df = df[~df['var'].isin(ignorevars)]
     return df
 
