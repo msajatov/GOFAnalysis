@@ -110,44 +110,48 @@ def runNew(args, base):
                                 except:
                                     print "Exception"
 
-                for var in variables:
-                        for test in tests:
-                            for channel in channels:
+                # for var in variables:
+                #         for test in tests:
+                #             for channel in channels:
 
-                                pvalues[conf]["aggregate"] = {}
-                                pvalues[conf]["aggregate"][var] = {}
-                                pvalues[conf]["aggregate"][var][test] = {}
+                #                 pvalues[conf]["aggregate"] = {}
+                #                 pvalues[conf]["aggregate"][var] = {}
+                #                 pvalues[conf]["aggregate"][var][test] = {}
 
 
-                                aggregate(basepath, channel, "2017", var, test, seed_list)
+                #                 aggregate(basepath, channel, "2017", var, test, seed_list)
 
-                                path = "{0}/gof/aggregate/2017/{2}/{3}/{4}/gof.json".format(basepath, seed, var, test, channel)               
+                #                 path = "{0}/gof/aggregate/2017/{2}/{3}/{4}/gof.json".format(basepath, seed, var, test, channel)               
                                 
-                                try:
-                                    with open(path, "r") as FSO:
-                                        data = json.load(FSO)
-                                except ValueError as e:
-                                    print e
-                                    print "Check {0}. Probably a ',' ".format(ccpath)
-                                except IOError as e:
-                                    print "Exception while parsing {0} {1} {2} for {3}".format(var, test, channel, conf)
-                                    print e
-                                    continue
+                #                 try:
+                #                     with open(path, "r") as FSO:
+                #                         data = json.load(FSO)
+                #                 except ValueError as e:
+                #                     print e
+                #                     print "Check {0}. Probably a ',' ".format(ccpath)
+                #                 except IOError as e:
+                #                     print "Exception while parsing {0} {1} {2} for {3}".format(var, test, channel, conf)
+                #                     print e
+                #                     continue
                                 
-                                try:
-                                    if test == "saturated":                                          
-                                        pvalues[conf]["aggregate"][var][test][channel] = data["125.0"]["p"]
-                                    else:                                        
-                                        pvalues[conf]["aggregate"][var][test][channel] = data["125.0"]["htt_{0}_100_Run2017".format(channel)]["p"]
-                                except:
-                                    print "Exception"
+                #                 try:
+                #                     if test == "saturated":                                          
+                #                         pvalues[conf]["aggregate"][var][test][channel] = data["125.0"]["p"]
+                #                     else:                                        
+                #                         pvalues[conf]["aggregate"][var][test][channel] = data["125.0"]["htt_{0}_100_Run2017".format(channel)]["p"]
+                #                 except:
+                #                     print "Exception"
 
             completepvalues[dc_type][gof_mode] = pvalues
                 
     if args.append:            
         path = "{0}_pvalues_seeds.json".format(args.channel)
-        existing = load(path, "output_seeds")
-        completepvalues = merge(existing, completepvalues)    
+        if os.path.exists(path):
+            existing = load(path, "output_seeds")
+            print existing
+            if existing is not None:
+                # completepvalues = merge(existing, completepvalues) 
+                completepvalues = mergeDicts(existing, completepvalues)   
     
     saveAsJson(completepvalues, "{0}_pvalues_seeds".format(args.channel), "output_seeds")
     
@@ -168,6 +172,21 @@ def aggregate(basepath, channel, era, var, algo, seed_list):
 
     # cd back
     os.chdir(cwd)
+
+def mergeDicts(a, b, path=None):
+    "merges b into a"
+    if path is None: path = []
+    for key in b:
+        if key in a:
+            if isinstance(a[key], dict) and isinstance(b[key], dict):
+                mergeDicts(a[key], b[key], path + [str(key)])
+            elif a[key] == b[key]:
+                pass # same leaf value
+            else:
+                raise Exception('Conflict at %s' % '.'.join(path + [str(key)]))
+        else:
+            a[key] = b[key]
+    return a
 
 def merge(existing, new):
         
@@ -205,7 +224,19 @@ def merge(existing, new):
         for gof_mode_key, gof_mode_val in dc_type_val.items():            
             for confkey, confval in gof_mode_val.items():
                 existing[dc_type_key][gof_mode_key][confkey] = confval
-                    
+
+    # seeds = True
+
+    # for dc_type_key, dc_type_val in pvalues.items():
+    #     for gof_mode_key, gof_mode_val in dc_type_val.items():            
+    #         for confkey, confval in gof_mode_val.items():
+    #             if seeds:
+    #                 for seedkey, seedval in confval.items():
+    #                     for varkey, varval in seedval.items():
+    #                         for testkey, testval in varval.items():
+    #                             for chkey, chval in testval.items():
+    #                                 if existing[dc_type_key][gof_mode_key][confkey][seedkey][varkey][testkey] is None:
+
             
     # print existing
     return existing
