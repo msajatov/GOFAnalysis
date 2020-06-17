@@ -19,13 +19,14 @@ def main():
     
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', dest='channel', help='Decay channel', choices = ['mt', 'et', 'tt', 'all'], default='all')
-    parser.add_argument('-t', dest='test', help='Test', choices = ['saturated', 'KS', 'AD', 'all'], default='all')
+    parser.add_argument('--test', dest='test', nargs="*", help='Tests', default=[])
     parser.add_argument('--conf', dest='configs', nargs="*", help='Configurations', default=[])
     parser.add_argument('-m', dest='method', help='Method to use', default=[])
     parser.add_argument('-i', dest='input', help='Input dir to use', default="output")
     parser.add_argument('-tt', dest='tt_variant', help='tt Variant', choices = ['vanilla', 'a', 'a2', 'e'], default='vanilla')
     parser.add_argument('-fg', dest='fg', nargs="*", help='Foreground configurations', default=[])
     parser.add_argument('-bg', dest='bg', nargs="*", help='Background configurations', default=[])
+    parser.add_argument('-err', dest='err', nargs="*", help='Errorbar configurations', default=[])
     parser.add_argument('-dummy', dest='dummy', help='Bg legend entry for plot', default="")
     parser.add_argument('--vars', nargs="*", help='Variables', default=[])
     args = parser.parse_args()
@@ -175,15 +176,40 @@ def makeCsv(args):
         
 def evalSeeds(args):
 
+    if not args.vars:
+        variables = ["pt_1", 
+                    "pt_2", 
+                    "jpt_1", 
+                    "jpt_2", 
+                    "bpt_1", 
+                    "bpt_2", 
+                    "njets", 
+                    "nbtag",
+                    "m_sv", 
+                    "mt_1", 
+                    "mt_2", 
+                    "pt_vis", 
+                    "pt_tt", 
+                    "mjj", 
+                    "jdeta",
+                    "m_vis", 
+                    "dijetpt", 
+                    "met"]
+    else:
+        variables = args.vars
+
     ch = args.channel
 
     df = loadRawDF(ch, args.input, seeds=True)
 
+    rows_list = []    
+
     for conf in args.configs:
         # print conf
-        confdf = df.query("conf == '{0}'".format(conf))
+        confdf = df.query("conf == '{0}'".format(conf)) \
+            .query("test == '{0}'".format(args.test[0]))
         # print confdf
-        for var in args.vars:
+        for var in variables:
             print "{0} --- {1}".format(conf, var)
             vardf = confdf.query("var == '{0}'".format(var))
             aggregate = vardf.query("seed == 'aggregate'")["pvalue"]
@@ -198,7 +224,30 @@ def evalSeeds(args):
             nominal = vardf.query("seed == '1230:1249:1'")["pvalue"]
             print "Nominal: {0}".format(nominal)
 
-    # print df
+            new_row = {'conf':conf, 'var':var, 'mean':mean}
+            rows_list.append(new_row)
+
+    newdf = pd.DataFrame(rows_list, columns=["conf", "var", "mean"])
+    
+    # only keep necessary columns (otherwise problems with merge)
+
+    subset = newdf.loc[:, ["var"] + ["mean"] + ["conf"]]    
+        
+    subset = subset.sort_values(by=["var", "conf"])
+    basedf = subset.query("conf == '{0}'".format(args.configs[0]))  
+    basedf = basedf.rename(columns = {"mean":args.configs[0]})
+    basedf = basedf.drop("conf", axis=1)   
+    
+    result = basedf
+    
+    for conf in args.configs[1:]: 
+        confdf = subset.query("conf == '{0}'".format(conf))
+        confdf = confdf.rename(columns = {"mean":conf})
+        confdf = confdf.drop("conf", axis=1) 
+        
+        result = pd.merge(result, confdf, on="var")
+
+    print result.to_csv()
 
 def printToConsole(args):        
     
@@ -311,6 +360,8 @@ def makePlot(args):
     
     if args.fg or args.bg:
         configs = args.fg + args.bg
+    elif args.err:  
+        configs = args.err
     elif args.configs:  
         configs = args.configs
     else:
@@ -327,7 +378,7 @@ def makePlot(args):
     for ch in channels:
         df = loadRawDF(ch, args.input)
         #for test in ["saturated", "KS", "AD"]:  
-        for test in ["saturated", "KS", "AD"]:  
+        for test in args.test:  
             result = getCompact(df, ch, test, configs)
             print result
             print "attempting to plot df: "
@@ -347,9 +398,20 @@ def makePlot(args):
                 confObj = Config(config)
                 bg_handles[config] = plotBackgroundByType(ax, confObj, result)
                 #ax.plot(xrange(len(result)), result[config], "o", color="lightgrey", markeredgecolor="lightgrey", label=config)
-            for config in args.fg:
+
+            if args.err:
+                plt.gca().set_color_cycle(None)
+                err_handles = {}
+                df = loadRawDF(ch, args.input, seeds=True)
+                df = df.query("channel == '{0}'".format(ch)).query("test == '{0}'".format(test))
+                for i, config in enumerate(args.err):
+                    co = Config(config)
+                    err_handles[config] = plotErrorBars(ax, co, result, df, i, 3)
+
+            plt.gca().set_color_cycle(None)
+            for i, config in enumerate(args.fg):                
                 confObj = Config(config)
-                fg_handles[config] = plotForegroundByType(ax, confObj, result)
+                fg_handles[config] = plotForegroundByType(ax, confObj, result, i, 3)
                 #ax.plot(xrange(len(result)), result[config], "_", markersize=12, markeredgewidth=2, label=config)
 
             plt.xticks(np.arange(len(result)), result["var"], rotation="vertical") 
@@ -358,7 +420,22 @@ def makePlot(args):
             ax.grid(which='major', axis='both', linestyle='-', color='lightgrey')    
             ax.set_axisbelow(True) 
 
-            fg_handle_list = [fg_handles[conf][0] for conf in args.fg]
+                    
+
+            plt.hlines(0.05, -0.5, 17.5, colors='red')
+
+            legend_handle_list = []
+            legend_handle_label_list = []
+            if fg_handles and len(fg_handles) > 0:
+                for config in args.fg:
+                    co = Config(config)
+                    legend_handle_label_list.append(co.getName()) 
+                legend_handle_list = [fg_handles[conf][0] for conf in args.fg]
+            else:
+                for config in args.err:
+                    co = Config(config)
+                    legend_handle_label_list.append(co.getName())    
+                legend_handle_list = [err_handles[conf][0] for conf in args.err]            
 
             dummy_xrange = xrange(20, 20 + len(result))
             print dummy_xrange
@@ -366,13 +443,12 @@ def makePlot(args):
             if args.dummy:
                 # dummy, make invisible series
                 dummy_handle = ax.plot(dummy_xrange, result[config], "o", color="lightgrey", markeredgecolor="lightgrey", label=args.dummy)
-                fg_handle_list += dummy_handle
-
-            plt.hlines(0.05, -0.5, 17.5, colors='red')
+                legend_handle_list += dummy_handle    
+            
 
             #plt.legend(loc='lower left', bbox_to_anchor=(0.0, 1.01), ncol=2, borderaxespad=0, frameon=False, numpoints=1, fontsize=12) 
             plt.legend(loc='lower left', bbox_to_anchor=(0.0, 1.01, 1.0, 0.2), ncol=4, borderaxespad=0, frameon=False, numpoints=1, fontsize=12, \
-                handletextpad=0.1, handles=fg_handle_list)     
+                handletextpad=0.1, handles=legend_handle_list, labels=legend_handle_label_list)     
 
             plt.title("{0} {1}".format(ch, test), y=1.1)    
 
@@ -386,41 +462,175 @@ def makePlot(args):
 
     #print completedf
 
-
-def plotForegroundByType(ax, confObj, result):
+def plotErrorBars(ax, confObj, result, df, index, total):
+    print "In plotErrorBars"
+    print df
+    
     config = confObj.getRawName()
+
+    var_list = result["var"]
+    print var_list
+
+    # iterate over all distinct vars in df (containing seeds etc.)
+    err_var_list = df["var"].unique()
+    print err_var_list
+
+    mean_list = [0] * len(result)
+    err_list = [0] * len(result)
+    stderr_list = [0] * len(result)
+
+    x_list = list(xrange(len(result)))
+
+    # use nominal values for all variables and selectively fill in non-zero error bars for variables in err_var_list
+    for i, v in enumerate(var_list):
+        if v in err_var_list:
+            mean, stddev, stderr = getMeanAndStdDevFromSeeds(df, config, v)
+            err_list[i] = stderr
+            stderr_list[i] = stderr
+            mean_list[i] = mean
+        else:
+            err_list[i] = 0
+            stderr_list[i] = 0
+            mean_list[i] = 0
+
+    if total == 3:
+        diff = 0.2
+        for i, x in enumerate(x_list):
+            if index == 0:
+                x_list[i] = x - diff
+            elif index == 2:
+                x_list[i] = x + diff
+    elif total == 2:
+        diff = 0.1
+        for i, x in enumerate(x_list):
+            if index == 0:
+                x_list[i] = x - diff
+            elif index == 1:
+                x_list[i] = x + diff
+     
     if config == "cc":
-        handle = ax.plot(xrange(len(result)), result[config], "_", color="black", markeredgecolor="black", markersize=12, markeredgewidth=2, label=confObj.getName())
+        handle = ax.errorbar(x_list, mean_list, yerr=err_list, fmt="_", color="black", markeredgecolor="black", markersize=12, markeredgewidth=2, label=confObj.getName())
         pass
     elif config == "cc1":
-        handle = ax.plot(xrange(len(result)), result[config], "_", color="red", markeredgecolor="red", markersize=12, markeredgewidth=2, label=confObj.getName())
+        handle = ax.errorbar(x_list, mean_list, yerr=err_list, fmt="_", color="red", markeredgecolor="red", markersize=12, markeredgewidth=2, label=confObj.getName())
         pass
     elif config == "cc2":
-        handle = ax.plot(xrange(len(result)), result[config], "_", color="orange", markeredgecolor="orange", markersize=12, markeredgewidth=2, label=confObj.getName())
+        handle = ax.errorbar(x_list, mean_list, yerr=err_list, fmt="_", color="orange", markeredgecolor="orange", markersize=12, markeredgewidth=2, label=confObj.getName())
         pass
     elif config == "ccemb":
-        handle = ax.plot(xrange(len(result)), result[config], "x", color="black", markeredgecolor="black", markersize=12, markeredgewidth=2, label=confObj.getName())
+        handle = ax.errorbar(x_list, mean_list, yerr=err_list, fmt="_", color="blue", markeredgecolor="blue", markersize=12, markeredgewidth=2, label=confObj.getName())
         pass
     elif config == "ccemb1":
-        handle = ax.plot(xrange(len(result)), result[config], "x", color="red", markeredgecolor="red", markersize=12, markeredgewidth=2, label=confObj.getName())
+        handle = ax.errorbar(x_list, mean_list, yerr=err_list, fmt="_", color="green", markeredgecolor="green", markersize=12, markeredgewidth=2, label=confObj.getName())
         pass
     elif config == "ccemb2":
-        handle = ax.plot(xrange(len(result)), result[config], "x", color="orange", markeredgecolor="orange", markersize=12, markeredgewidth=2, label=confObj.getName())
+        handle = ax.errorbar(x_list, mean_list, yerr=err_list, fmt="_", color="darkviolet", markeredgecolor="darkviolet", markersize=12, markeredgewidth=2, label=confObj.getName())
         pass
     elif config == "tt":
         #ax.plot(xrange(len(result)), result[config], "^", color="#9B98CC", markeredgecolor="#9B98CC", label=config)
-        handle = ax.plot(xrange(len(result)), result[config], "^", color="#795A98", markeredgecolor="#795A98", label=confObj.getName())
+        handle = ax.errorbar(x_list, mean_list, yerr=err_list, fmt="_", color="#795A98", markeredgecolor="#795A98", markersize=12, markeredgewidth=2, label=confObj.getName())
         pass
     elif config == "w":
         #ax.plot(xrange(len(result)), result[config], "^", color="#DE5A6A", markeredgecolor="#DE5A6A", label=config)
-        handle = ax.plot(xrange(len(result)), result[config], "^", color="#DE5A6A", markeredgecolor="#DE5A6A", label=confObj.getName())
+        handle = ax.errorbar(x_list, mean_list, yerr=err_list, fmt="_", color="#DE5A6A", markeredgecolor="#DE5A6A", markersize=12, markeredgewidth=2, label=confObj.getName())
         pass
     elif config == "xx":
         #ax.plot(xrange(len(result)), result[config], "^", color="#FACAFF", markeredgecolor="#FACAFF", label=config)
-        handle = ax.plot(xrange(len(result)), result[config], "^", color="#f0c9ee", markeredgecolor="#f0c9ee", label=confObj.getName())
+        handle = ax.errorbar(x_list, mean_list, yerr=err_list, fmt="_", color="#f0c9ee", markeredgecolor="#f0c9ee", markersize=12, markeredgewidth=2, label=confObj.getName())
         pass
     else:
-        handle = ax.plot(xrange(len(result)), result[config], "_", markersize=12, markeredgewidth=2, label=confObj.getName())
+        handle = ax.errorbar(x_list, mean_list, yerr=err_list, fmt="_", markersize=12, markeredgewidth=2, label=confObj.getName())
+
+    return handle
+
+def set_color_cycle(self, clist=None):
+    if clist is None:
+        clist = rcParams['axes.color_cycle']
+    self.color_cycle = itertools.cycle(clist)
+
+def set_color_cycle(self, clist):
+    """
+    Set the color cycle for any future plot commands on this Axes.
+
+    *clist* is a list of mpl color specifiers.
+    """
+    self._get_lines.set_color_cycle(clist)
+    self._get_patches_for_fill.set_color_cycle(clist)
+
+def getMeanAndStdDevFromSeeds(df, conf, var):            
+    confdf = df.query("conf == '{0}'".format(conf))
+    print "{0} --- {1}".format(conf, var)
+    vardf = confdf.query("var == '{0}'".format(var))
+    # aggregate = vardf.query("seed == 'aggregate'")["pvalue"]
+    # print "Aggregate: {0}".format(aggregate)
+
+    print vardf
+
+    mean = vardf.query("seed != 'aggregate'")["pvalue"].mean(axis=0)
+    stddev = vardf.query("seed != 'aggregate'")["pvalue"].std(axis=0)
+    stderr = vardf.query("seed != 'aggregate'")["pvalue"].sem(axis=0)
+    # print "Mean: {0}".format(mean)
+    # print "Sigma: {0}".format(stddev)
+
+    print "{0} +- {1}".format(mean, stddev)
+    nominal = vardf.query("seed == '1230:1249:1'")["pvalue"]
+    print "Nominal: {0}".format(nominal)
+
+    return mean, stddev, stderr
+
+def plotForegroundByType(ax, confObj, result, index, total):
+    config = confObj.getRawName()
+
+    x_list = list(xrange(len(result)))
+
+    if total == 3:
+        diff = 0.2
+        for i, x in enumerate(x_list):
+            if index == 0:
+                x_list[i] = x - diff
+            elif index == 2:
+                x_list[i] = x + diff
+    elif total == 2:
+        diff = 0.1
+        for i, x in enumerate(x_list):
+            if index == 0:
+                x_list[i] = x - diff
+            elif index == 1:
+                x_list[i] = x + diff
+
+
+    if config == "cc":
+        handle = ax.plot(x_list, result[config], "_", color="black", markeredgecolor="black", markersize=12, markeredgewidth=2, label=confObj.getName())
+        pass
+    elif config == "cc1":
+        handle = ax.plot(x_list, result[config], "_", color="red", markeredgecolor="red", markersize=12, markeredgewidth=2, label=confObj.getName())
+        pass
+    elif config == "cc2":
+        handle = ax.plot(x_list, result[config], "_", color="orange", markeredgecolor="orange", markersize=12, markeredgewidth=2, label=confObj.getName())
+        pass
+    elif config == "ccemb":
+        handle = ax.plot(x_list, result[config], "_", color="blue", markeredgecolor="blue", markersize=12, markeredgewidth=2, label=confObj.getName())
+        pass
+    elif config == "ccemb1":
+        handle = ax.plot(x_list, result[config], "_", color="green", markeredgecolor="green", markersize=12, markeredgewidth=2, label=confObj.getName())
+        pass
+    elif config == "ccemb2":
+        handle = ax.plot(x_list, result[config], "_", color="darkviolet", markeredgecolor="darkviolet", markersize=12, markeredgewidth=2, label=confObj.getName())
+        pass
+    elif config == "tt":
+        #ax.plot(xrange(len(result)), result[config], "^", color="#9B98CC", markeredgecolor="#9B98CC", label=config)
+        handle = ax.plot(x_list, result[config], "_", color="#795A98", markeredgecolor="#795A98", markersize=12, markeredgewidth=2, label=confObj.getName())
+        pass
+    elif config == "w":
+        #ax.plot(xrange(len(result)), result[config], "^", color="#DE5A6A", markeredgecolor="#DE5A6A", label=config)
+        handle = ax.plot(x_list, result[config], "_", color="#DE5A6A", markeredgecolor="#DE5A6A", markersize=12, markeredgewidth=2, label=confObj.getName())
+        pass
+    elif config == "xx":
+        #ax.plot(xrange(len(result)), result[config], "^", color="#FACAFF", markeredgecolor="#FACAFF", label=config)
+        handle = ax.plot(x_list, result[config], "_", color="#f0c9ee", markeredgecolor="#f0c9ee", markersize=12, markeredgewidth=2, label=confObj.getName())
+        pass
+    else:
+        handle = ax.plot(x_list, result[config], "|", markersize=12, markeredgewidth=2, label=confObj.getName())
 
     return handle
 
@@ -428,16 +638,16 @@ def plotForegroundByType(ax, confObj, result):
 def plotBackgroundByType(ax, confObj, result):
     config = confObj.getRawName()
     if config == "cc":
-        handle = ax.plot(xrange(len(result)), result[config], "_", color="#DEDEE0", markeredgecolor="#DEDEE0", markersize=12, markeredgewidth=2, label=confObj.getName())
+        handle = ax.plot(xrange(len(result)), result[config], "_", color="#DEDEE0", markeredgecolor="#DEDEE0", zorder=0, markersize=12, markeredgewidth=2, label=confObj.getName())
         pass
     elif config == "cc1":
-        handle = ax.plot(xrange(len(result)), result[config], "_", color="#DEDEE0", markeredgecolor="#DEDEE0", markersize=12, markeredgewidth=2, label=confObj.getName())
+        handle = ax.plot(xrange(len(result)), result[config], "_", color="#DEDEE0", markeredgecolor="#DEDEE0", zorder=0,markersize=12, markeredgewidth=2, label=confObj.getName())
         pass
     elif config == "cc2":
-        handle = ax.plot(xrange(len(result)), result[config], "_", color="#DEDEE0", markeredgecolor="#DEDEE0", markersize=12, markeredgewidth=2, label=confObj.getName())
+        handle = ax.plot(xrange(len(result)), result[config], "_", color="#DEDEE0", markeredgecolor="#DEDEE0", zorder=0, markersize=12, markeredgewidth=2, label=confObj.getName())
         pass
     else:
-        handle = ax.plot(xrange(len(result)), result[config], "o", color="#DEDEE0", markeredgecolor="#DEDEE0", label=confObj.getName())
+        handle = ax.plot(xrange(len(result)), result[config], "o", color="#DEDEE0", markeredgecolor="#DEDEE0", zorder=0, label=confObj.getName())
 
     return handle
 
@@ -485,9 +695,12 @@ class Config:
         self.namedict["tt"] = "TT"
         self.namedict["w"] = "W"
         self.namedict["xx"] = "QCD"
-        # self.namedict["cc"] = "MC1"
-        # self.namedict["cc1"] = "MC2"
-        # self.namedict["cc2"] = "MC3"
+        self.namedict["cc"] = "MC1"
+        self.namedict["cc1"] = "MC2"
+        self.namedict["cc2"] = "MC3"
+        self.namedict["ccemb"] = "EMB1"
+        self.namedict["ccemb1"] = "EMB2"
+        self.namedict["ccemb2"] = "EMB3"
 
     def getName(self):
         if self.rawname in self.namedict:

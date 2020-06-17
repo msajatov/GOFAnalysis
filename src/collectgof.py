@@ -12,8 +12,8 @@ def main():
     parser.add_argument('conf', nargs="*", help='Configurations', default=[])
     args = parser.parse_args()
     
-    # base = "/afs/cern.ch/work/m/msajatov/private/cms2/CMSSW_8_1_0/src/CombineHarvester/HTTSM2017/fittest6/{0}/gof/2017"
-    base = "/afs/cern.ch/work/m/msajatov/private/cms3/CMSSW_8_1_0/src/CombineHarvester/HTTSM2017/out/{0}/gof/2017"
+    base = "/afs/cern.ch/work/m/msajatov/private/cms2/CMSSW_8_1_0/src/CombineHarvester/HTTSM2017/fittest6/{0}/gof/2017"
+    # base = "/afs/cern.ch/work/m/msajatov/private/cms3/CMSSW_8_1_0/src/CombineHarvester/HTTSM2017/out/{0}/gof/2017"
 
     if args.input != "":
         runNew(args, base)

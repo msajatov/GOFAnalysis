@@ -25,28 +25,27 @@ def runNew(args, base):
     
     configurations = args.conf
     
-    # variables = ["pt_1", 
-    #              "pt_2", 
-    #              "jpt_1", 
-    #              "jpt_2", 
-    #              "bpt_1", 
-    #              "bpt_2", 
-    #              "njets", 
-    #              "nbtag",
-    #              "m_sv", 
-    #              "mt_1", 
-    #              "mt_2", 
-    #              "pt_vis", 
-    #              "pt_tt", 
-    #              "mjj", 
-    #              "jdeta",
-    #              "m_vis", 
-    #              "dijetpt", 
-    #              "met",
-    #              "eta_1",
-    #              "eta_2"]
-
-    variables = args.vars
+    if not args.vars:
+        variables = ["pt_1", 
+                    "pt_2", 
+                    "jpt_1", 
+                    "jpt_2", 
+                    "bpt_1", 
+                    "bpt_2", 
+                    "njets", 
+                    "nbtag",
+                    "m_sv", 
+                    "mt_1", 
+                    "mt_2", 
+                    "pt_vis", 
+                    "pt_tt", 
+                    "mjj", 
+                    "jdeta",
+                    "m_vis", 
+                    "dijetpt", 
+                    "met"]
+    else:
+        variables = args.vars
     
     # tests = ["saturated", "KS", "AD"]
     tests = args.algos
@@ -89,7 +88,7 @@ def runNew(args, base):
 
                                 
                                 path = "{0}/gof/{1}/2017/{2}/{3}/{4}/gof.json".format(basepath, seed, var, test, channel)
-                                print path               
+                                #print path               
                                 
                                 try:
                                     with open(path, "r") as FSO:
@@ -146,14 +145,14 @@ def runNew(args, base):
                 
     if args.append:            
         path = "{0}_pvalues_seeds.json".format(args.channel)
-        if os.path.exists(path):
-            existing = load(path, "output_seeds")
-            print existing
+        if os.path.exists("output/" + path):
+            existing = load(path, "output")
+            # print existing
             if existing is not None:
                 # completepvalues = merge(existing, completepvalues) 
                 completepvalues = mergeDicts(existing, completepvalues)   
     
-    saveAsJson(completepvalues, "{0}_pvalues_seeds".format(args.channel), "output_seeds")
+    saveAsJson(completepvalues, "{0}_pvalues_seeds".format(args.channel), "output")
     
 def aggregate(basepath, channel, era, var, algo, seed_list):
 
@@ -249,7 +248,7 @@ def saveAsJson(pvalues, filename, outputbase):
             json.dump(pvalues, FSO)  
         
 def saveOutput(filename, data):
-    f = open("output_seeds/" + filename, "w")
+    f = open("output/" + filename, "w")
     f.write(data)
     f.close()
 
