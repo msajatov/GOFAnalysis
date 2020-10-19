@@ -9,6 +9,7 @@ import evalgof as evalgof
 
 import matplotlib as mpl
 mpl.use('Agg')
+mpl.rcParams['mathtext.fontset'] = 'dejavusans'
 import matplotlib.pyplot as plt
 
 
@@ -453,7 +454,12 @@ def makePlot(args):
             plt.legend(loc='lower left', bbox_to_anchor=(0.0, 1.01, 1.0, 0.2), ncol=4, borderaxespad=0, frameon=False, numpoints=1, fontsize=12, \
                 handletextpad=0.1, handles=legend_handle_list, labels=legend_handle_label_list)     
 
-            plt.title("{0} {1}".format(ch, test), y=1.1)    
+            chtex_dict = {"et": r"$\mathrm{e}\tau_{\mathrm{h}}$", "mt": r"$\mu"r"\tau_{\mathrm{h}}$", "tt": r"$\tau_{\mathrm{h}}\tau_{\mathrm{h}}$"}
+            chtex = chtex_dict.get(ch,ch)
+
+            testtex = r"$\mathdefault{" + test + r"}$"
+                    
+            plt.title("{0} {1}".format(chtex, testtex), y=1.1)    
 
             #plt.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.1)
 
