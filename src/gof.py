@@ -445,7 +445,7 @@ def makePlot(args):
 
             if args.dummy:
                 # dummy, make invisible series
-                dummy_handle = ax.plot(dummy_xrange, [0] * len(result), "o", color="lightgrey", markeredgecolor="lightgrey", label=args.dummy)
+                dummy_handle = ax.plot(dummy_xrange, [0] * len(result), "o", color="#e0e0e0", markeredgecolor="#e0e0e0", label=args.dummy)
                 legend_handle_list += dummy_handle   
                 legend_handle_label_list.append(args.dummy) 
             
@@ -547,7 +547,7 @@ def plotErrorBars(ax, confObj, result, df, index, total):
         pass
     elif config == "xx":
         #ax.plot(xrange(len(result)), result[config], "^", color="#FACAFF", markeredgecolor="#FACAFF", label=config)
-        handle = ax.errorbar(x_list, mean_list, yerr=err_list, fmt="_", color="#f0c9ee", markeredgecolor="#f0c9ee", markersize=12, markeredgewidth=2, label=confObj.getName())
+        handle = ax.errorbar(x_list, mean_list, yerr=err_list, fmt="_", color="#f6a8f3", markeredgecolor="#f6a8f3", markersize=12, markeredgewidth=2, label=confObj.getName())
         pass
     else:
         handle = ax.errorbar(x_list, mean_list, yerr=err_list, fmt="_", markersize=12, markeredgewidth=2, label=confObj.getName())
@@ -638,7 +638,7 @@ def plotForegroundByType(ax, confObj, result, index, total):
         pass
     elif config == "xx":
         #ax.plot(xrange(len(result)), result[config], "^", color="#FACAFF", markeredgecolor="#FACAFF", label=config)
-        handle = ax.plot(x_list, result[config], "_", color="#f0c9ee", markeredgecolor="#f0c9ee", markersize=12, markeredgewidth=2, label=confObj.getName())
+        handle = ax.plot(x_list, result[config], "_", color="#f6a8f3", markeredgecolor="#f6a8f3", markersize=12, markeredgewidth=2, label=confObj.getName())
         pass
     else:
         handle = ax.plot(x_list, result[config], "|", markersize=12, markeredgewidth=2, label=confObj.getName())
@@ -658,7 +658,7 @@ def plotBackgroundByType(ax, confObj, result):
         handle = ax.plot(xrange(len(result)), result[config], "_", color="#DEDEE0", markeredgecolor="#DEDEE0", zorder=0, markersize=12, markeredgewidth=2, label=confObj.getName())
         pass
     else:
-        handle = ax.plot(xrange(len(result)), result[config], "o", color="#DEDEE0", markeredgecolor="#DEDEE0", zorder=0, label=confObj.getName())
+        handle = ax.plot(xrange(len(result)), result[config], "o", color="#e0e0e0", markeredgecolor="#e0e0e0", zorder=0, label=confObj.getName())
 
     return handle
 
