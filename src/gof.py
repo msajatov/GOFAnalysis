@@ -488,7 +488,6 @@ def plotErrorBars(ax, confObj, result, df, index, total):
 
     mean_list = [0] * len(result)
     err_list = [0] * len(result)
-    stderr_list = [0] * len(result)
 
     x_list = list(xrange(len(result)))
 
@@ -496,12 +495,11 @@ def plotErrorBars(ax, confObj, result, df, index, total):
     for i, v in enumerate(var_list):
         if v in err_var_list:
             mean, stddev, stderr = getMeanAndStdDevFromSeeds(df, config, v)
+            nominal = getFirstSeedFromSeeds(df, config, v)
             err_list[i] = stddev
-            stderr_list[i] = stderr
-            mean_list[i] = mean
+            mean_list[i] = nominal
         else:
             err_list[i] = 0
-            stderr_list[i] = 0
             mean_list[i] = 0
 
     if total == 3:
@@ -588,6 +586,22 @@ def getMeanAndStdDevFromSeeds(df, conf, var):
     print "Nominal: {0}".format(nominal)
 
     return mean, stddev, stderr
+
+def getFirstSeedFromSeeds(df, conf, var):            
+    confdf = df.query("conf == '{0}'".format(conf))
+    print "{0} --- {1}".format(conf, var)
+    vardf = confdf.query("var == '{0}'".format(var))
+    nominal = vardf.query("seed == '1230:1249:1'").reset_index(drop=True)
+    # print "Nominal:"
+    # print nominal
+    # nominal = nominal.reset_index(drop=True)
+    # print "Nominal:"
+    # print nominal
+
+    val = nominal["pvalue"][0]
+    print val
+
+    return val
 
 def plotForegroundByType(ax, confObj, result, index, total):
     config = confObj.getRawName()
