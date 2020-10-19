@@ -164,14 +164,14 @@ def makeCsv(args):
             if add_failing:
                 result = getCompact(df, ch, test, configs)   
                 print result 
-                csv = result.to_csv(index=False, sep=";")
+                csv = result.to_csv(index=False, sep=",")
                 print csv
                 
                 #add failing using evalgof.compareFailingVarsNew(in_df, channel)
             else:
                 result = getCompact(df, ch, test, configs)
                 print result
-                csv = result.to_csv(index=False, sep=";")
+                csv = result.to_csv(index=False, sep=",")
                 print csv              
         
 def evalSeeds(args):
@@ -247,7 +247,9 @@ def evalSeeds(args):
         
         result = pd.merge(result, confdf, on="var")
 
-    print result.to_csv()
+    result.drop("var", axis=1, inplace=True)
+
+    print result.to_csv(index=False)
 
 def printToConsole(args):        
     
@@ -383,7 +385,7 @@ def makePlot(args):
             print result
             print "attempting to plot df: "
 
-            fig = plt.figure(facecolor='w', figsize=(6,7))
+            fig = plt.figure(facecolor='w', figsize=(5,7))
 
             plt.xlim(-0.5, 17.5)  
             plt.ylim(0, 1)  
@@ -442,8 +444,9 @@ def makePlot(args):
 
             if args.dummy:
                 # dummy, make invisible series
-                dummy_handle = ax.plot(dummy_xrange, result[config], "o", color="lightgrey", markeredgecolor="lightgrey", label=args.dummy)
-                legend_handle_list += dummy_handle    
+                dummy_handle = ax.plot(dummy_xrange, [0] * len(result), "o", color="lightgrey", markeredgecolor="lightgrey", label=args.dummy)
+                legend_handle_list += dummy_handle   
+                legend_handle_label_list.append(args.dummy) 
             
 
             #plt.legend(loc='lower left', bbox_to_anchor=(0.0, 1.01), ncol=2, borderaxespad=0, frameon=False, numpoints=1, fontsize=12) 
@@ -455,6 +458,8 @@ def makePlot(args):
             #plt.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.1)
 
             #plt.show()
+
+            plt.tight_layout()
 
             path = "/eos/user/m/msajatov/wormhole/pvalue_plots"
             plt.savefig(os.path.join(path, "{0}_{1}.png".format(ch, test)))
@@ -485,7 +490,7 @@ def plotErrorBars(ax, confObj, result, df, index, total):
     for i, v in enumerate(var_list):
         if v in err_var_list:
             mean, stddev, stderr = getMeanAndStdDevFromSeeds(df, config, v)
-            err_list[i] = stderr
+            err_list[i] = stddev
             stderr_list[i] = stderr
             mean_list[i] = mean
         else:
@@ -518,13 +523,13 @@ def plotErrorBars(ax, confObj, result, df, index, total):
         handle = ax.errorbar(x_list, mean_list, yerr=err_list, fmt="_", color="orange", markeredgecolor="orange", markersize=12, markeredgewidth=2, label=confObj.getName())
         pass
     elif config == "ccemb":
-        handle = ax.errorbar(x_list, mean_list, yerr=err_list, fmt="_", color="blue", markeredgecolor="blue", markersize=12, markeredgewidth=2, label=confObj.getName())
+        handle = ax.errorbar(x_list, mean_list, yerr=err_list, fmt="_", color="black", markeredgecolor="black", markersize=12, markeredgewidth=2, label=confObj.getName())
         pass
     elif config == "ccemb1":
-        handle = ax.errorbar(x_list, mean_list, yerr=err_list, fmt="_", color="green", markeredgecolor="green", markersize=12, markeredgewidth=2, label=confObj.getName())
+        handle = ax.errorbar(x_list, mean_list, yerr=err_list, fmt="_", color="red", markeredgecolor="red", markersize=12, markeredgewidth=2, label=confObj.getName())
         pass
     elif config == "ccemb2":
-        handle = ax.errorbar(x_list, mean_list, yerr=err_list, fmt="_", color="darkviolet", markeredgecolor="darkviolet", markersize=12, markeredgewidth=2, label=confObj.getName())
+        handle = ax.errorbar(x_list, mean_list, yerr=err_list, fmt="_", color="orange", markeredgecolor="orange", markersize=12, markeredgewidth=2, label=confObj.getName())
         pass
     elif config == "tt":
         #ax.plot(xrange(len(result)), result[config], "^", color="#9B98CC", markeredgecolor="#9B98CC", label=config)
@@ -609,13 +614,13 @@ def plotForegroundByType(ax, confObj, result, index, total):
         handle = ax.plot(x_list, result[config], "_", color="orange", markeredgecolor="orange", markersize=12, markeredgewidth=2, label=confObj.getName())
         pass
     elif config == "ccemb":
-        handle = ax.plot(x_list, result[config], "_", color="blue", markeredgecolor="blue", markersize=12, markeredgewidth=2, label=confObj.getName())
+        handle = ax.plot(x_list, result[config], "_", color="black", markeredgecolor="black", markersize=12, markeredgewidth=2, label=confObj.getName())
         pass
     elif config == "ccemb1":
-        handle = ax.plot(x_list, result[config], "_", color="green", markeredgecolor="green", markersize=12, markeredgewidth=2, label=confObj.getName())
+        handle = ax.plot(x_list, result[config], "_", color="red", markeredgecolor="red", markersize=12, markeredgewidth=2, label=confObj.getName())
         pass
     elif config == "ccemb2":
-        handle = ax.plot(x_list, result[config], "_", color="darkviolet", markeredgecolor="darkviolet", markersize=12, markeredgewidth=2, label=confObj.getName())
+        handle = ax.plot(x_list, result[config], "_", color="orange", markeredgecolor="orange", markersize=12, markeredgewidth=2, label=confObj.getName())
         pass
     elif config == "tt":
         #ax.plot(xrange(len(result)), result[config], "^", color="#9B98CC", markeredgecolor="#9B98CC", label=config)
