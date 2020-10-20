@@ -397,16 +397,19 @@ def makePlot(args):
             bg_handles = {}
             fg_handles = {}
 
+            df = loadRawDF(ch, args.input, seeds=True)
+            df = df.query("channel == '{0}'".format(ch)).query("test == '{0}'".format(test))
+
             for config in args.bg:
                 confObj = Config(config)
-                bg_handles[config] = plotBackgroundByType(ax, confObj, result)
+                bg_handles[config] = plotBackgroundByType(ax, confObj, result, df)
                 #ax.plot(xrange(len(result)), result[config], "o", color="lightgrey", markeredgecolor="lightgrey", label=config)
 
             if args.err:
                 plt.gca().set_color_cycle(None)
                 err_handles = {}
-                df = loadRawDF(ch, args.input, seeds=True)
-                df = df.query("channel == '{0}'".format(ch)).query("test == '{0}'".format(test))
+                # df = loadRawDF(ch, args.input, seeds=True)
+                # df = df.query("channel == '{0}'".format(ch)).query("test == '{0}'".format(test))
                 for i, config in enumerate(args.err):
                     co = Config(config)
                     err_handles[config] = plotErrorBars(ax, co, result, df, i, 3)
@@ -496,8 +499,8 @@ def plotErrorBars(ax, confObj, result, df, index, total):
         if v in err_var_list:
             mean, stddev, stderr = getMeanAndStdDevFromSeeds(df, config, v)
             nominal = getFirstSeedFromSeeds(df, config, v)
-            err_list[i] = stddev
-            mean_list[i] = nominal
+            err_list[i] = stderr
+            mean_list[i] = mean
         else:
             err_list[i] = 0
             mean_list[i] = 0
@@ -660,19 +663,36 @@ def plotForegroundByType(ax, confObj, result, index, total):
     return handle
 
 
-def plotBackgroundByType(ax, confObj, result):
+def plotBackgroundByType(ax, confObj, result, df):
     config = confObj.getRawName()
+    y_list = result[config]
+
+    highres = True
+
+    var_list = result["var"]
+
+    mean_list = [0] * len(result)
+
+    # use nominal values for all variables and selectively fill in non-zero error bars for variables in err_var_list
+    if highres:
+        for i, v in enumerate(var_list):
+            mean, stddev, stderr = getMeanAndStdDevFromSeeds(df, config, v)
+            nominal = getFirstSeedFromSeeds(df, config, v)
+            mean_list[i] = mean
+
+        y_list = mean_list
+
     if config == "cc":
-        handle = ax.plot(xrange(len(result)), result[config], "_", color="#DEDEE0", markeredgecolor="#DEDEE0", zorder=0, markersize=12, markeredgewidth=2, label=confObj.getName())
+        handle = ax.plot(xrange(len(result)), y_list, "_", color="#DEDEE0", markeredgecolor="#DEDEE0", zorder=0, markersize=12, markeredgewidth=2, label=confObj.getName())
         pass
     elif config == "cc1":
-        handle = ax.plot(xrange(len(result)), result[config], "_", color="#DEDEE0", markeredgecolor="#DEDEE0", zorder=0,markersize=12, markeredgewidth=2, label=confObj.getName())
+        handle = ax.plot(xrange(len(result)), y_list, "_", color="#DEDEE0", markeredgecolor="#DEDEE0", zorder=0,markersize=12, markeredgewidth=2, label=confObj.getName())
         pass
     elif config == "cc2":
-        handle = ax.plot(xrange(len(result)), result[config], "_", color="#DEDEE0", markeredgecolor="#DEDEE0", zorder=0, markersize=12, markeredgewidth=2, label=confObj.getName())
+        handle = ax.plot(xrange(len(result)), y_list, "_", color="#DEDEE0", markeredgecolor="#DEDEE0", zorder=0, markersize=12, markeredgewidth=2, label=confObj.getName())
         pass
     else:
-        handle = ax.plot(xrange(len(result)), result[config], "o", color="#e0e0e0", markeredgecolor="#e0e0e0", zorder=0, label=confObj.getName())
+        handle = ax.plot(xrange(len(result)), y_list, "o", color="#e0e0e0", markeredgecolor="#e0e0e0", zorder=0, label=confObj.getName())
 
     return handle
 
