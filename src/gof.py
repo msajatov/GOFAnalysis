@@ -28,7 +28,7 @@ def main():
     parser.add_argument('-fg', dest='fg', nargs="*", help='Foreground configurations', default=[])
     parser.add_argument('-bg', dest='bg', nargs="*", help='Background configurations', default=[])
     parser.add_argument('-err', dest='err', nargs="*", help='Errorbar configurations', default=[])
-    parser.add_argument('-dummy', dest='dummy', help='Bg legend entry for plot', default="")
+    parser.add_argument('-dummy', dest='dummy', nargs="*", help='Bg legend entry for plot', default=[])
     parser.add_argument('--vars', nargs="*", help='Variables', default=[])
     args = parser.parse_args()
 
@@ -447,22 +447,40 @@ def makePlot(args):
             print dummy_xrange
 
             if args.dummy:
-                # dummy, make invisible series
-                dummy_handle = ax.plot(dummy_xrange, [0] * len(result), "o", color="#e0e0e0", markeredgecolor="#e0e0e0", label=args.dummy)
-                legend_handle_list += dummy_handle   
-                legend_handle_label_list.append(args.dummy) 
+                for dum in args.dummy:
+                    label = dum.split("-")[0]
+                    if len(args.dummy) > 1:                        
+                        marker = dum.split("-")[1]
+                    else:
+                        marker = "o"
+
+                    # dummy, make invisible series
+                    if marker == "_":
+                        dummy_handle = ax.plot(dummy_xrange, [0] * len(result), marker, color="#e0e0e0", markeredgecolor="#e0e0e0", markersize=12, markeredgewidth=2, label=label)
+                    else:
+                        dummy_handle = ax.plot(dummy_xrange, [0] * len(result), marker, color="#e0e0e0", markeredgecolor="#e0e0e0", label=label)
+                    legend_handle_list += dummy_handle   
+                    legend_handle_label_list.append(label) 
             
 
+            legendcols = len(args.err) + len(args.dummy)
+            if legendcols == 5:
+                legendfontsize = 10.5
+            else:
+                legendfontsize = 12
+
             #plt.legend(loc='lower left', bbox_to_anchor=(0.0, 1.01), ncol=2, borderaxespad=0, frameon=False, numpoints=1, fontsize=12) 
-            plt.legend(loc='lower left', bbox_to_anchor=(0.0, 1.01, 1.0, 0.2), ncol=4, borderaxespad=0, frameon=False, numpoints=1, fontsize=12, \
+            plt.legend(loc='lower left', bbox_to_anchor=(0.0, 1.01, 1.0, 0.2), ncol=legendcols, borderaxespad=0, frameon=False, numpoints=1, fontsize=legendfontsize, \
                 handletextpad=0.1, handles=legend_handle_list, labels=legend_handle_label_list)     
 
             chtex_dict = {"et": r"$\mathrm{e}\tau_{\mathrm{h}}$", "mt": r"$\mu"r"\tau_{\mathrm{h}}$", "tt": r"$\tau_{\mathrm{h}}\tau_{\mathrm{h}}$"}
             chtex = chtex_dict.get(ch,ch)
 
+            line = r"$-$"
+
             testtex = r"$\mathdefault{" + test + r"}$"
                     
-            plt.title("{0} {1}".format(chtex, testtex), y=1.1)    
+            plt.title("p-values {2} {0} {2} {1}".format(chtex, testtex, line), y=1.1)    
 
             #plt.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.1)
 
@@ -506,7 +524,7 @@ def plotErrorBars(ax, confObj, result, df, index, total):
             mean_list[i] = 0
 
     if total == 3:
-        diff = 0.2
+        diff = 0.1
         for i, x in enumerate(x_list):
             if index == 0:
                 x_list[i] = x - diff
@@ -683,13 +701,22 @@ def plotBackgroundByType(ax, confObj, result, df):
         y_list = mean_list
 
     if config == "cc":
-        handle = ax.plot(xrange(len(result)), y_list, "_", color="#DEDEE0", markeredgecolor="#DEDEE0", zorder=0, markersize=12, markeredgewidth=2, label=confObj.getName())
+        handle = ax.plot(xrange(len(result)), y_list, "_", color="#e0e0e0", markeredgecolor="#e0e0e0", zorder=0, markersize=12, markeredgewidth=2, label=confObj.getName())
         pass
     elif config == "cc1":
-        handle = ax.plot(xrange(len(result)), y_list, "_", color="#DEDEE0", markeredgecolor="#DEDEE0", zorder=0,markersize=12, markeredgewidth=2, label=confObj.getName())
+        handle = ax.plot(xrange(len(result)), y_list, "_", color="#e0e0e0", markeredgecolor="#e0e0e0", zorder=0,markersize=12, markeredgewidth=2, label=confObj.getName())
         pass
     elif config == "cc2":
-        handle = ax.plot(xrange(len(result)), y_list, "_", color="#DEDEE0", markeredgecolor="#DEDEE0", zorder=0, markersize=12, markeredgewidth=2, label=confObj.getName())
+        handle = ax.plot(xrange(len(result)), y_list, "_", color="#e0e0e0", markeredgecolor="#e0e0e0", zorder=0, markersize=12, markeredgewidth=2, label=confObj.getName())
+        pass
+    elif config == "ccemb":
+        handle = ax.plot(xrange(len(result)), y_list, "_", color="#e0e0e0", markeredgecolor="#e0e0e0", zorder=0, markersize=12, markeredgewidth=2, label=confObj.getName())
+        pass
+    elif config == "ccemb1":
+        handle = ax.plot(xrange(len(result)), y_list, "_", color="#e0e0e0", markeredgecolor="#e0e0e0", zorder=0,markersize=12, markeredgewidth=2, label=confObj.getName())
+        pass
+    elif config == "ccemb2":
+        handle = ax.plot(xrange(len(result)), y_list, "_", color="#e0e0e0", markeredgecolor="#e0e0e0", zorder=0, markersize=12, markeredgewidth=2, label=confObj.getName())
         pass
     else:
         handle = ax.plot(xrange(len(result)), y_list, "o", color="#e0e0e0", markeredgecolor="#e0e0e0", zorder=0, label=confObj.getName())
